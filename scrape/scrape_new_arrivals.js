@@ -2,6 +2,7 @@
 var page = require('webpage').create();
 
 // Error handler that outputs the error message and stack trace to std error.
+// ToDo: Change this to write to a file instead.
 var errorHandler = function(msg, trace) {
     var msgStack = ['ERROR: ' + msg];
     
@@ -17,12 +18,6 @@ var errorHandler = function(msg, trace) {
 // Error handler that ignores all errors.
 var doNothingHandler = function(msg, trace) { };
 
-// This doesn't seem to do anything.
-phantom.onError = function(msg, trace) {
-    errorHandler(msg, trace);
-    phantom.exit();
-}
-
 page.onConsoleMessage = function(msg) {
     console.log(msg);
 };
@@ -35,54 +30,25 @@ var url = "cinema.html";
 
 page.open(url, function(status) {
     if ( status === "success" ) {
-		page.injectJs("jquery.min.js");       
-        
+		
         page.evaluate(function() {
             var scrapeNewArrivals = function() {
-                var newArrivalsId = "ctl00_ctl00_Stiles_Left_uc_CinemaFilterMain_pnlNewArrivals";
-                var $newArrivals = $("#" + newArrivalsId);
+                var $newArrivals = $("#ctl00_ctl00_Stiles_Left_uc_CinemaFilterMain_pnlNewArrivals");
                 
                 var arrivals = [];
                 
                 $newArrivals.first().find("a").each(function() {
-                    var $this = $(this);
-                    
-                    // Page of new arrival (na)
-                    var na_page = $this.attr("href");
-                    //// Image
-                    //var na_image = $this.children("img").first().attr("src");
-                    //
-                    //var $spans = $this.children("span");
-                    //// Title (GRE)
-                    //var na_title = $spans.filter(".title").first().text();
-                    //// ToDo: The stars for the film can be found in a span inside the title.
-                    //// Original title (EN)
-                    //var na_origTitle = $spans.filter(".orgtitle").first().text();
-                    //// Description. The description has the format: Genre | Year | FilmType
-                    //var description = $spans.filter(".description").first().text();
-                    //var descriptionFields = description.split("|");
-                    //var na_genre = descriptionFields[0].trim();
-                    //var na_year = descriptionFields[1].trim();
-                    //var na_filmType = descriptionFields[2].trim();
-                    
-                    arrivals.push({
-                        page: na_page,
-                        //image: na_image,
-                        //title: na_title,
-                        //origTitle: na_origTitle,
-                        //genre: na_genre,
-                        //year: na_year,
-                        //filmType: na_filmType
-                    });
+                    // Page of new arrival
+                    var page = $(this).attr("href");
+                    arrivals.push(page);
                 }); // each
                 
                 return arrivals;
 	    }; // scrapeNewArrivals     
             
             var arrivals = scrapeNewArrivals();
-            arrivals.forEach(function(e) { 
-                console.log(JSON.stringify(e));
-                console.log("");
+            arrivals.forEach(function(p) { 
+                console.log(p);
             });
             
         }); // page.evaluate
@@ -93,4 +59,3 @@ page.open(url, function(status) {
 	
 	phantom.exit();
 });
-

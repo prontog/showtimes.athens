@@ -2,6 +2,7 @@
 var page = require('webpage').create();
 
 // Error handler that outputs the error message and stack trace to std error.
+// ToDo: Change this to write to a file instead.
 var errorHandler = function(msg, trace) {
     var msgStack = ['ERROR: ' + msg];
     
@@ -17,12 +18,6 @@ var errorHandler = function(msg, trace) {
 // Error handler that ignores all errors.
 var doNothingHandler = function(msg, trace) { };
 
-// This doesn't seem to do anything.
-phantom.onError = function(msg, trace) {
-    errorHandler(msg, trace);
-    phantom.exit();
-}
-
 page.onConsoleMessage = function(msg) {
     console.log(msg);
 };
@@ -35,33 +30,26 @@ var url = "guide.html";
 
 page.open(url, function(status) {
     if ( status === "success" ) {
-		page.injectJs("jquery.min.js");       
-        
         page.evaluate(function() {
-            var scrapeAllFilms = function() {
-                var $newArrivals = $("h2.placename");
+            var scrapeFilmUrls = function() {
+                var $films = $("h2.placename");
                 
-                var films = [];
+                var filmUrls = [];
                 
-                $newArrivals.each(function() {
-                    var $this = $(this);
-                    var $a = $this.children("a").first();
-                    
+                $films.each(function() {
+                    var $a = $(this).children("a").first();
                     // Page of film
                     var page = $a.attr("href");
                     
-                    films.push({
-                        page: page,                        
-                    });
+                    filmUrls.push(page);
                 }); // each
                 
-                return films;
-	    }; // scrapeAllFilms     
+                return filmUrls;
+            }; // scrapeAllFilms     
             
-            var films = scrapeAllFilms();
-            films.forEach(function(e) { 
-                console.log(JSON.stringify(e));
-                console.log("");
+            var films = scrapeFilmUrls();
+            films.forEach(function(p) { 
+                console.log(p);
             });
             
         }); // page.evaluate
@@ -72,4 +60,3 @@ page.open(url, function(status) {
 	
 	phantom.exit();
 });
-
