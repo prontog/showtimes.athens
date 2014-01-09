@@ -49,35 +49,35 @@ page.open(url, function(status) {
                     
                     // Page of new arrival (na)
                     var na_page = $this.attr("href");
-                    // Image
-                    var na_image = $this.children("img").first().attr("src");
-                    
-                    var $spans = $this.children("span");
-                    // Title (GRE)
-                    var na_title = $spans.filter(".title").first().text();
-                    // ToDo: The stars for the film can be found in a span inside the title.
-                    // Original title (EN)
-                    var na_origTitle = $spans.filter(".orgtitle").first().text();
-                    // Description. The description has the format: Genre | Year | FilmType
-                    var description = $spans.filter(".description").first().text();
-                    var descriptionFields = description.split("|");
-                    var na_genre = descriptionFields[0].trim();
-                    var na_year = descriptionFields[1].trim();
-                    var na_filmType = descriptionFields[2].trim();
+                    //// Image
+                    //var na_image = $this.children("img").first().attr("src");
+                    //
+                    //var $spans = $this.children("span");
+                    //// Title (GRE)
+                    //var na_title = $spans.filter(".title").first().text();
+                    //// ToDo: The stars for the film can be found in a span inside the title.
+                    //// Original title (EN)
+                    //var na_origTitle = $spans.filter(".orgtitle").first().text();
+                    //// Description. The description has the format: Genre | Year | FilmType
+                    //var description = $spans.filter(".description").first().text();
+                    //var descriptionFields = description.split("|");
+                    //var na_genre = descriptionFields[0].trim();
+                    //var na_year = descriptionFields[1].trim();
+                    //var na_filmType = descriptionFields[2].trim();
                     
                     arrivals.push({
                         page: na_page,
-                        image: na_image,
-                        title: na_title,
-                        origTitle: na_origTitle,
-                        genre: na_genre,
-                        year: na_year,
-                        filmType: na_filmType
+                        //image: na_image,
+                        //title: na_title,
+                        //origTitle: na_origTitle,
+                        //genre: na_genre,
+                        //year: na_year,
+                        //filmType: na_filmType
                     });
                 }); // each
                 
                 return arrivals;
-			}; // scrapeNewArrivals     
+	    }; // scrapeNewArrivals     
             
             var arrivals = scrapeNewArrivals();
             arrivals.forEach(function(e) { 
