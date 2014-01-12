@@ -30,7 +30,8 @@ var url = "cinema.html";
 
 page.open(url, function(status) {
     if ( status === "success" ) {
-		
+        page.injectJs("jquery.min.js");
+        
         page.evaluate(function() {
             var scrapeNewArrivals = function() {
                 var $newArrivals = $("#ctl00_ctl00_Stiles_Left_uc_CinemaFilterMain_pnlNewArrivals");

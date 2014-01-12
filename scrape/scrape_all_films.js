@@ -30,6 +30,8 @@ var url = "guide.html";
 
 page.open(url, function(status) {
     if ( status === "success" ) {
+        page.injectJs("jquery.min.js");
+        
         page.evaluate(function() {
             var scrapeFilmUrls = function() {
                 var $films = $("h2.placename");

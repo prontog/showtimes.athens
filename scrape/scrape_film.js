@@ -2,6 +2,7 @@
 var page = require('webpage').create();
 
 // Error handler that outputs the error message and stack trace to std error.
+// ToDo: Change this to write to a file instead.
 var errorHandler = function(msg, trace) {
     var msgStack = ['ERROR: ' + msg];
     
@@ -17,12 +18,6 @@ var errorHandler = function(msg, trace) {
 // Error handler that ignores all errors.
 var doNothingHandler = function(msg, trace) { };
 
-// This doesn't seem to do anything.
-phantom.onError = function(msg, trace) {
-    errorHandler(msg, trace);
-    phantom.exit();
-}
-
 page.onConsoleMessage = function(msg) {
     console.log(msg);
 };
@@ -34,7 +29,7 @@ var url = "film.html";
 
 page.open(url, function(status) {
     if ( status === "success" ) {
-		//page.injectJs("jquery.min.js");       
+        page.injectJs("jquery.min.js");
         
         page.evaluate(function(filmUrl) {
             var scrapeFilm = function() {
@@ -48,7 +43,7 @@ page.open(url, function(status) {
                                     
                 var $h1_titles = $divContainer.children("h1").first();
                 // Original title (EN)
-                var origTitle = $h1_titles.children("span").first().text();
+                var origTitle = $h1_titles.children("span").first().text().trim();
                 // Title (GRE)
                 var title = $h1_titles.text().replace(origTitle, "").trim();
                 // stars. The half stars for the film can be found in the last digit.
@@ -56,23 +51,22 @@ page.open(url, function(status) {
                 // ToCheck: Do I need this?
                 var $divPlaceData = $divContainer.children("div.placedata").first();
                 var $pSimpleData = $divPlaceData.children("p.simpledata").first();
-                var _description = $pSimpleData.first().text();
-                var category = $pSimpleData.find("span.category").text();
+                var _description = $pSimpleData.first().text().trim();
+                var category = $pSimpleData.find("span.category").text().trim();
                 // Rated (PG13 etc.)
-                var rated = $pSimpleData.find("span.rated").text();
+                var rated = $pSimpleData.find("span.rated").text().trim();
                 // Description. The description has the format: Year | FilmType | Duration
                 var descriptionFields = _description.split("|");                    
                 var year = descriptionFields[0].replace(category, "").trim();
                 var filmType = descriptionFields[1].trim();
                 var duration = descriptionFields[2].replace(rated, "").trim();
-                var credits = $pSimpleData.next().text();
-                var summary = $pSimpleData.next().next().text(); 
-                var review = $divContainer.find(placeContainerSelector).children("p").text();
+                var credits = $pSimpleData.next().text().trim();
+                var summary = $pSimpleData.next().next().text().trim(); 
+                var review = $divContainer.find(placeContainerSelector).children("p").text().trim();
                 var imdb = $divContainer.find("ul.tainialink").find("li a").first().attr("href");
                 var theatersUrl = $divContainer.find("a.big-button").first().attr("href");
                 var id = theatersUrl.match(/[\d]+$/)[0];
                 var theaters = "";
-                
                 
                 var film = {
                     id: id,
@@ -107,4 +101,3 @@ page.open(url, function(status) {
 	
 	phantom.exit();
 });
-
