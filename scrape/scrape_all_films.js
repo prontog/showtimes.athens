@@ -18,13 +18,13 @@ if (phantom.injectJs("common.js") == false) {
     phantom.exit(2);
 }
 
-scrape(page, url, function() {
+scrape(page, url, function(ctx) {
     var $films = $("h2.placename");
                                     
     $films.each(function() {
         var $a = $(this).children("a").first();
-        // Page of film
-        var page = $a.attr("href");                    
-        console.log(page);
+        // Url of film.
+        var filmUrl = $a.attr("href");                    
+        console.log(filmUrl);
     }); // each                                
 });

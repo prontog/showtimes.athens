@@ -2,16 +2,25 @@
 // page is a phantomjs webpage object.
 // url is the url of the webpage to scrape.
 // func is the actual scraping function.
-// context is an optional argument to be passed to func.
-var scrape = function(page, url, func, context) {
+// NOTE: Any other params passed will be added to a context object
+//       that will be passed to func.
+var scrape = function(page, url, func) {
+    var otherArgs = [];
+    for (var i = 3; i < arguments.length; i++) {
+        otherArgs.push(arguments[i]);    
+    }
+    
+    var context = {
+        url: url,
+        otherArgs: otherArgs
+    };
+    
     page.open(url, function(status) {
-        if ( status === "success" ) {        
+        if ( status === "success" ) {     
+            page.onConsoleMessage = writeToConsoleLog;
             page.injectJs("jquery.min.js");
             
-            if (arguments.length == 4)
-                page.evaluate(func, context);
-            else
-                page.evaluate(func);
+            page.evaluate(func, context);
         }// If status == "success"
         else {
             console.error("Failed to open " + url);
@@ -20,6 +29,19 @@ var scrape = function(page, url, func, context) {
         phantom.exit(0);
     });
 }
+
+var writeToStderr = function(msg) {
+    //fs.write("/dev/stderr", msg);
+    system.stderr.writeLine(msg);
+}
+
+var writeToTerminal = function(msg) {
+    fs.write("/dev/tty", msg);
+}
+
+var writeToConsoleLog = function(msg) {
+    console.log(msg);
+};
 
 // Error handler that outputs the error message and stack trace to std error.
 // ToDo: Change this to write to a file instead.
@@ -32,14 +54,16 @@ var errorHandler = function(msg, trace) {
             msgStack.push(' -> ' + t.file + ': ' + t.line + (t.function ? ' (in function "' + t.function +'")' : ''));
         });
     }
-    console.error(msgStack.join('\n'));
+    
+    writeToStderr(msgStack.join('\n'));
+    //console.error(msgStack.join('\n'));
 };
 
 // Error handler that ignores all errors.
 var doNothingHandler = function(msg, trace) { };
 
-page.onConsoleMessage = function(msg) {
-    console.log(msg);
+//page.onError = doNothingHandler;
+page.onError = errorHandler;
+page.onAlert = function(msg) {
+    writeToTerminal("ALERT: " + msg);
 };
-
-page.onError = doNothingHandler;

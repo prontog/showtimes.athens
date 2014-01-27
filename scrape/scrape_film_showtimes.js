@@ -1,13 +1,18 @@
+var system = require('system');
+var page = require('webpage').create();
+
 // CLI arguments
 var args = system.args;
 var url = null;
+var filmId = null;
 
-if (args.length != 2) {
-    console.log("usage: phantomjs " + phantom.scriptName + " URL");
+if (args.length != 3) {
+    console.log("usage: phantomjs " + phantom.scriptName + " FILM_ID URL");
     phantom.exit(1);
 } else {
+    filmId = args[1];
     //url = "film_showtimes.html";
-    url = args[1];
+    url = args[2];
 }
 
 // Inject common code. Includes error handling.
@@ -16,8 +21,10 @@ if (phantom.injectJs("common.js") == false) {
     phantom.exit(2);
 }
 
-page.evaluate(function() {
+scrape(page, url, function(ctx) {
     var $areas = $("div.piatsaname");                                
+    
+    var id = ctx.otherArgs[0];
     
     $areas.each(function() {
         var $piatsaName = $(this);
@@ -53,6 +60,7 @@ page.evaluate(function() {
             // ToDo: Probably should split the rooms into an array.
             
             var showtime = {
+                id: id,
                 area: area,
                 cinemaName: cinemaName,
                 cinemaUrl: cinemaUrl,
@@ -69,4 +77,4 @@ page.evaluate(function() {
             $next = $next.next();
         } // while table
     }); // each div.piatsaname                                                        
-}); // scrape
+}, filmId); // scrape

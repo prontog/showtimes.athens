@@ -18,12 +18,12 @@ if (phantom.injectJs("common.js") == false) {
     phantom.exit(2);
 }
 
-scrape(page, url, function(filmUrl) {
+scrape(page, url, function(ctx) {
     var placeContainerSelector = "div.place-container";
     var $divContainer = $(placeContainerSelector).first();
     
     // Page of film
-    var url = filmUrl;
+    var url = ctx.url;
     // Image
     var image = $divContainer.children("img").first().attr("src");
                         
@@ -74,4 +74,4 @@ scrape(page, url, function(filmUrl) {
     };
     
     console.log(JSON.stringify(film));        
-}, page.url); // scrape
+}); // scrape

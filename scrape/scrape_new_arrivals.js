@@ -18,12 +18,12 @@ if (phantom.injectJs("common.js") == false) {
     phantom.exit(2);
 }
 
-scrape(page, url, function() {                        
+scrape(page, url, function(ctx) {                        
     var $newArrivals = $("#ctl00_ctl00_Stiles_Left_uc_CinemaFilterMain_pnlNewArrivals");                                
     
     $newArrivals.first().find("a").each(function() {
-        // Page of new arrival
-        var page = $(this).attr("href");
-        console.log(page);                    
+        // Url of the new arrival.
+        var filmUrl = $(this).attr("href");
+        console.log(filmUrl);                    
     }); // each                                                       
 }); // scrape
