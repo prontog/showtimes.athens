@@ -1,5 +1,10 @@
 var system = require('system');
-var page = require('webpage').create();
+
+// Inject common code. Includes error handling.
+if (phantom.injectJs("common.js") == false) {
+    console.log("Missing common.js file.");
+    phantom.exit(2);
+}
 
 // CLI arguments
 var args = system.args;
@@ -15,13 +20,7 @@ if (args.length != 3) {
     url = args[2];
 }
 
-// Inject common code. Includes error handling.
-if (phantom.injectJs("common.js") == false) {
-    console.log("Missing common.js file.");
-    phantom.exit(2);
-}
-
-scrape(page, url, function(ctx) {
+scrape(url, function(ctx) {
     var $areas = $("div.piatsaname");                                
     
     var id = ctx.otherArgs[0];

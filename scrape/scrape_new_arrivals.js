@@ -1,5 +1,10 @@
 var system = require('system');
-var page = require('webpage').create();
+
+// Inject common code. Includes error handling.
+if (phantom.injectJs("common.js") == false) {
+    console.log("Missing common.js file.");
+    phantom.exit(2);
+}
 
 // CLI arguments
 var args = system.args;
@@ -12,13 +17,7 @@ if (args.length != 2) {
     url = args[1];
 }
 
-// Inject common code. Includes error handling.
-if (phantom.injectJs("common.js") == false) {
-    console.log("Missing common.js file.");
-    phantom.exit(2);
-}
-
-scrape(page, url, function(ctx) {                        
+scrape(url, function(ctx) {                        
     var $newArrivals = $("#ctl00_ctl00_Stiles_Left_uc_CinemaFilterMain_pnlNewArrivals");                                
     
     $newArrivals.first().find("a").each(function() {
