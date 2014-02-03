@@ -25,7 +25,8 @@ module.exports = {
       "origTitle": "In Another Country",
       "category": "Σινεφίλ",
       "year": "2012",
-      "filmType": "Έγχρ."
+      "filmType": "Έγχρ.",
+      "newArrival": true
     }
 
     */

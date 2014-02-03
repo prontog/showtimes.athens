@@ -16,7 +16,6 @@ if (args.length != 3) {
     phantom.exit(1);
 } else {
     filmId = args[1];
-    //url = "film_showtimes.html";
     url = args[2];
 }
 
@@ -59,7 +58,7 @@ scrape(url, function(ctx) {
             // ToDo: Probably should split the rooms into an array.
             
             var showtime = {
-                id: id,
+                filmId: id,
                 area: area,
                 cinemaName: cinemaName,
                 cinemaUrl: cinemaUrl,

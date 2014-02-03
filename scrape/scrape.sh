@@ -27,7 +27,10 @@ function scrape_films
     while read film_url
     do
         echo scraping ${URL_CINEMA}${film_url}...
-        phantomjs scrape_film.js ${URL_CINEMA}$film_url >> $2 
+        if ! phantomjs scrape_film.js ${URL_CINEMA}$film_url >> $2
+        then
+            exit
+        fi
     done < $1
 }
 
@@ -82,6 +85,13 @@ then
     exit 
 fi
 scrape_films $FN_NEW_ARRIVAL_URLS $FN_NEW_ARRIVALS
+# Add the newArrival field with value true.
+if ! jq '(.newArrival = true)' $FN_NEW_ARRIVALS > ${FN_NEW_ARRIVALS}.tmp
+then 
+    exit
+else
+    mv ${FN_NEW_ARRIVALS}.tmp ${FN_NEW_ARRIVALS}
+fi 
 
 # Scrape all films.
 echo +All films
@@ -94,7 +104,10 @@ fi
 scrape_films $FN_ALL_FILMS_URLS $FN_ALL_FILMS
 
 echo +Images and Shotimes
-jq -r '.id, .image, .theatersUrl' < $FN_ALL_FILMS > $FN_FILM_INFO
+if ! jq -r '.id, .image, .theatersUrl' $FN_ALL_FILMS > $FN_FILM_INFO
+then
+    exit
+fi
 
 while read FILM_ID
 do

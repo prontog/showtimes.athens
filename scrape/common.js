@@ -28,7 +28,6 @@ var writeToConsoleLog = function(msg) {
 };
 
 // Error handler that outputs the error message and stack trace to std error.
-// ToDo: Change this to write to a file instead.
 var errorHandler = function(msg, trace) {
     var msgStack = ['ERROR: ' + msg];
     
@@ -69,15 +68,16 @@ var subscribeToPageEvents = function(page) {
         return defaultVal;
     };
     
-    page.onResourceRequested = function(requestData, networkRequest) {
-        //writeToTerminal('  Url: ' + url);
-        //writeToTerminal('->Request (#' + requestData.id + '): ' + requestData.url);
-        
+    page.onResourceRequested = function(requestData, networkRequest) {        
         // Allow only the resources of the initial request (page.open).
         // Note: url is a variable in all scrape scripts. Remember that this code is
         // injected (phantom.injectJs).
-        if (!endsWith(url, requestData.url.toString()))
+        if (!endsWith(requestData.url.toString(), url)) {
             networkRequest.abort();
+//            writeToTerminal('No match');
+    //        writeToTerminal('  Url: ' + url);
+//        writeToTerminal('->Request (#' + requestData.id + '): ' + requestData.url);
+        }
     };
     
     page.onResourceTimeout = function(request) {
@@ -114,7 +114,7 @@ var subscribeToPageEvents = function(page) {
 //       that will be passed to func.
 var scrape = function(url, func) {
     var otherArgs = [];
-    for (var i = 3; i < arguments.length; i++) {
+    for (var i = 2; i < arguments.length; i++) {
         otherArgs.push(arguments[i]);    
     }
     
@@ -136,6 +136,7 @@ var scrape = function(url, func) {
         }// If status == "success"
         else {
             console.error("Failed to open " + url);
+            phantom.exit(1);
         }
         
         phantom.exit(0);
