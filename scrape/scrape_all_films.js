@@ -19,9 +19,11 @@ if (args.length != 2) {
 
 scrape(url, function(ctx) {
     var $films = $("h2.placename");
-                                    
-    $films.each(function() {
+    ctx.check($films, "$films");
+    
+    $films.each(function() {     
         var $a = $(this).children("a").first();
+        ctx.check($a, "$a");
         // Url of film.
         var filmUrl = $a.attr("href");                    
         console.log(filmUrl);

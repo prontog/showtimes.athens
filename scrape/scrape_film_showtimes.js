@@ -20,9 +20,10 @@ if (args.length != 3) {
 }
 
 scrape(url, function(ctx) {
-    var $areas = $("div.piatsaname");                                
-    
     var id = ctx.otherArgs[0];
+    
+    var $areas = $("div.piatsaname");                                
+    ctx.check($areas, "$areas");
     
     $areas.each(function() {
         var $piatsaName = $(this);
@@ -30,6 +31,7 @@ scrape(url, function(ctx) {
         var area = $piatsaName.children("a").text().trim();
         
         var $next = $piatsaName.next();
+        ctx.check($next, "$next");
         while ($next[0] && $next[0].tagName == "TABLE")
         {
             var $table = $next;

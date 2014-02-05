@@ -20,6 +20,7 @@ if (args.length != 2) {
 scrape(url, function(ctx) {
     var placeContainerSelector = "div.place-container";
     var $divContainer = $(placeContainerSelector).first();
+    ctx.check($divContainer, "$divContainer");
     
     // Page of film
     var url = ctx.url;
@@ -27,6 +28,7 @@ scrape(url, function(ctx) {
     var image = $divContainer.children("img").first().attr("src");
                         
     var $h1_titles = $divContainer.children("h1").first();
+    ctx.check($h1_titles, "$h1_titles");
     // Original title (EN)
     var origTitle = $h1_titles.children("span").first().text().trim();
     // Title (GRE)
@@ -35,7 +37,9 @@ scrape(url, function(ctx) {
     var stars = $divContainer.children("div.stars15h")[0].className;
     // ToCheck: Do I need this?
     var $divPlaceData = $divContainer.children("div.placedata").first();
+    ctx.check($divPlaceData, "$divPlaceData");
     var $pSimpleData = $divPlaceData.children("p.simpledata").first();
+    ctx.check($pSimpleData, "$pSimpleData");
     var _description = $pSimpleData.first().text().trim();
     var category = $pSimpleData.find("span.category").text().trim();
     // Rated (PG13 etc.)

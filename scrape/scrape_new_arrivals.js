@@ -17,12 +17,17 @@ if (args.length != 2) {
     url = args[1];
 }
 
-scrape(url, function(ctx) {                        
+scrape(url, function(ctx) {          
     var $newArrivals = $("#ctl00_ctl00_Stiles_Left_uc_CinemaFilterMain_pnlNewArrivals");                                
+    ctx.check($newArrivals, "$newArrivals");
     
-    $newArrivals.first().find("a").each(function() {
+    var $a = $newArrivals.first().find("a");
+    ctx.check($a, "$a");
+    
+    $a.each(function() {
         // Url of the new arrival.
         var filmUrl = $(this).attr("href");
+        ctx.check(filmUrl, "$this.href");
         console.log(filmUrl);                    
     }); // each                                                       
 }); // scrape
