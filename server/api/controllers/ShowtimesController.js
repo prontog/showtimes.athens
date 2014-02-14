@@ -17,14 +17,34 @@
 
 module.exports = {
     
-  
-
-
-  /**
-   * Overrides for the settings in `config/controllers.js`
-   * (specific to ShowtimesController)
-   */
-  _config: {}
-
+    deleteAll: function(req, res) {
+        
+        Showtimes.find()
+            .exec(function(err, allShowtimes) {
+                if (err) {
+                    return res.send(err,500);
+                } 
+                else {    
+                    for (var i = 0; i < allShowtimes.length; i++) {
+                        var showtimes = allShowtimes[i];
+                        showtimes.destroy(function(err) {
+                                if (err) {
+                                    console.error(err);
+                                } else {
+                                    console.log("Deleted showtimes with id " + showtimes.id);
+                                }
+                            });
+                    }
+                    
+                    return res.json(null);
+                }
+            });
+    },
+    
+    /**
+    * Overrides for the settings in `config/controllers.js`
+    * (specific to ShowtimesController)
+    */
+    _config: {}
   
 };

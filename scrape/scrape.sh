@@ -85,13 +85,13 @@ then
     exit 
 fi
 scrape_films $FN_NEW_ARRIVAL_URLS $FN_NEW_ARRIVALS
-# Add the newArrival field with value true.
-if ! jq '(.newArrival = true)' $FN_NEW_ARRIVALS > ${FN_NEW_ARRIVALS}.tmp
-then 
-    exit
-else
-    mv ${FN_NEW_ARRIVALS}.tmp ${FN_NEW_ARRIVALS}
-fi 
+## Add the newArrival field with value true. -c is for compact output.
+#if ! jq -c '(.newArrival = true)' $FN_NEW_ARRIVALS > ${FN_NEW_ARRIVALS}.tmp
+#then 
+#    exit
+#else
+#    mv ${FN_NEW_ARRIVALS}.tmp ${FN_NEW_ARRIVALS}
+#fi 
 
 # Scrape all films.
 echo +All films
@@ -122,6 +122,5 @@ do
 done < $FN_FILM_INFO
 
 # Rename the tmp folder now that the process has completed successfully.
-mv $DIR_TMP $DIR_OUT/$(date +%Y%m%d_%H%M%S)
-
-exit 0
+DIR_OUT_CURR=$DIR_OUT/$(date +%Y%m%d_%H%M%S)
+mv $DIR_TMP $DIR_OUT_CURR 

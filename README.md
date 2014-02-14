@@ -7,6 +7,7 @@ Prerequisites for the scrape script
 ------------------------------------------
 1. PhantomJS (http://phantomjs.org/)
 2. jq (http://stedolan.github.io/jq/)
+3. Bash
 
 
 Prerequisites for the server

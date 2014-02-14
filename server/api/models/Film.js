@@ -59,7 +59,7 @@ module.exports = {
             type: "string"
         },
         theaters: "string",
-        newArrival: "boolean"
+        newArrival: "string"
     }
 
 };

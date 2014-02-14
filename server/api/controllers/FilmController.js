@@ -1,6 +1,6 @@
 /**
  * FilmController
- *
+  *
  * @module      :: Controller
  * @description	:: A set of functions called `actions`.
  *
@@ -24,15 +24,35 @@ module.exports = {
     new: function(req, res) {
         
         Film.find()
-            .where({ newArrival: true })
+            .where({ newArrival: "true" })
             .exec(function(err, newFilms) {
-                
-                // Error handling
                 if (err) {
                     return res.send(err,500);
-                // New arrivals found successfully!
                 } else {
                     return res.json(newFilms);
+                }
+            });
+    },
+    deleteAll: function(req, res) {
+        
+        Film.find()
+            .exec(function(err, allFilms) {
+                if (err) {
+                    return res.send(err,500);
+                } 
+                else {    
+                    for (var i = 0; i < allFilms.length; i++) {
+                        var film = allFilms[i];
+                        film.destroy(function(err) {
+                                if (err) {
+                                    console.error(err);
+                                } else {
+                                    console.log("Deleted film with id " + film.id);
+                                }
+                            });
+                    }
+                    
+                    return res.json(null);
                 }
             });
     },

@@ -1,6 +1,7 @@
 var fs = require("fs");
 var webpage = require('webpage');
 var env = require("system").env;
+var os = require("system").os;
 
 var logTime = false;
 
@@ -18,9 +19,14 @@ var writeToStderr = function(msg) {
     system.stderr.writeLine(prepareLogEntry(msg));
 }
 
-// Write to terminal.
-var writeToTerminal = function(msg) {    
-	fs.write("/dev/tty", prepareLogEntry(msg) + "\n");
+// Write to terminal. Note: This could be replaced by writeToStderr.
+var writeToTerminal = function(msg) {
+    if (os.name == "linux") {
+	   fs.write("/dev/tty", prepareLogEntry(msg) + "\n");
+    }
+    else {
+        writeToStderr(msg);
+    }
 }
 
 // Writes to standard out.
@@ -195,4 +201,85 @@ var scrape = function(url, func) {
         // seem to exit asynchronously (https://github.com/ariya/phantomjs/issues/11306).
         phantom.exit(fatalErrorOccured ? 1 : 0);
     });
+}
+
+// Inject JQuery
+if (phantom.injectJs("jquery.min.js") === false) {
+    system.stderr.writeLine("Missing jquery.min.js file.");
+    phantom.exit(2);
+}
+
+// Posts JSON objects read from a file to a URL. 
+// url is the url where the post will take place.
+// filename is the path of a file containing JSON objects. One per row.
+// transform is an optional function that can transform the data.
+var post = function (url, filename, transform) {
+    return send("POST", url, filename, transform);
+}
+
+// Updates JSON objects read from a file to a URL. 
+// url is the url where the update will take place.
+// filename is the path of a file containing JSON objects. One per row.
+// transform is an optional function that can transform the data.
+var put = function (url, filename, transform) {
+    return send("PUT", url, filename, transform);
+}
+
+// Sends JSON objects read from a file to a URL. 
+// url is the url where the action will take place.
+// filename is the path of a file containing JSON objects. One per row.
+// transform is an optional function that can transform the data.
+var send = function (type, url, filename, transform) {
+    var errorCount = 0;
+    var file = fs.open(filename, 'r');
+    
+    try {    
+        while (!file.atEnd()) {
+            var line = file.readLine();
+            try {
+                var data = JSON.parse(line);
+            } catch (e) {
+                system.stderr.writeLine("Could not parse: " + line);
+                system.stderr.writeLine(JSON.stringify(e));
+                return 1;
+            }
+            
+            if (transform) {
+                try {
+                    data = transform(data);
+                } catch (e) {
+                    system.stderr.writeLine("Error while transforming data.");
+                    system.stderr.writeLine(JSON.stringify(e));
+                    return 1;
+                }
+            }
+            
+            // Using JQuery AJAX, post the .
+            $.ajax({
+                async: false,
+                timeout: 5000,
+                url: url,
+                type: type,
+                data: data,
+                dataType: "json",
+                success: function (response) {
+                    console.log(JSON.stringify(response));
+                },
+                error: function (xhr, status, thrown) {
+                    errorCount++;
+                    system.stderr.writeLine(status);
+                    system.stderr.writeLine(JSON.stringify(xhr));
+                },
+                complete: function (xhr, status) {
+                    //system.stderr.writeLine(status);
+                    //system.stderr.writeLine(JSON.stringify(xhr));
+                }
+            });
+        }
+    } 
+    finally {
+        file.close();
+    }    
+    
+    return errorCount;
 }
