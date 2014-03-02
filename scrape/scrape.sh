@@ -15,7 +15,7 @@ FN_NEW_ARRIVAL_URLS=$DIR_TMP/new_arrivals.url
 FN_NEW_ARRIVALS=$DIR_TMP/new_arrivals.json
 FN_ALL_FILMS_URLS=$DIR_TMP/all_films.url
 FN_ALL_FILMS=$DIR_TMP/all_films.json
-FN_FILM_INFO=$DIR_TMP/images.url
+FN_FILM_INFO=$DIR_TMP/films.info
 FN_SHOWTIMES=$DIR_TMP/showtimes.json
 
 function scrape_films
@@ -104,19 +104,17 @@ fi
 scrape_films $FN_ALL_FILMS_URLS $FN_ALL_FILMS
 
 echo +Images and Shotimes
-if ! jq -r '.id, .image, .theatersUrl' $FN_ALL_FILMS > $FN_FILM_INFO
+if ! phantomjs map_film_info.js $FN_ALL_FILMS > $FN_FILM_INFO
 then
     exit
 fi
 
-while read FILM_ID
+while read FILM_ID FILM_URL SHOWTIMES_URL
 do
-    read FILM_URL
     # Download image.
     FILM_URL=http://www.athinorama.gr/lmnts/events/cinema/${FILM_ID}/Poster.jpg
     echo downloading $FILM_URL
     curl -L $FILM_URL > ${DIR_IMAGES}/${FILM_ID}.jpg
-    read SHOWTIMES_URL
     echo scraping ${URL_ATHINORAMA}/${SHOWTIMES_URL}
     phantomjs scrape_film_showtimes.js $FILM_ID ${URL_ATHINORAMA}/${SHOWTIMES_URL} >> $FN_SHOWTIMES 
 done < $FN_FILM_INFO

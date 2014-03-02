@@ -2,7 +2,7 @@ var system = require("system");
 
 // Inject common code. Includes error handling.
 if (phantom.injectJs("common.js") == false) {
-    system.stderr.writeLine("Missing common.js file.");
+    console.log("Missing common.js file.");
     phantom.exit(2);
 }
 
@@ -11,7 +11,7 @@ var args = system.args;
 var url = null;
 
 if (args.length != 2) {
-    system.stderr.writeLine("usage: phantomjs " + phantom.scriptName + " URL");
+    writeToStderr("usage: phantomjs " + phantom.scriptName + " URL");
     phantom.exit(1);
 } else {
     url = args[1];

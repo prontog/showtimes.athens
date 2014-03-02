@@ -1,9 +1,24 @@
 var fs = require("fs");
-var webpage = require('webpage');
-var env = require("system").env;
-var os = require("system").os;
+var _webpage = require('webpage');
+var _system = require("system");
+var _env = _system.env;
+var _os = _system.os;
 
-var logTime = false;
+// Check PhantomJS version. Versions prion to 1.9 are not suppoerted on Windows.
+//This is because system.stderr was introduced in version 1.9.
+var phantomVersion = phantom.version;
+if (_os.name == "windows" 
+    && phantomVersion.major < 2 
+    && phantomVersion.minor < 9) {
+    console.log("PhantomJS versions prion to 1.9 are not supported on Windows.");
+    phantom.exit(1);
+}
+
+// Tracing settings.
+var debug = _env["DEBUG"];
+var logTime = _env["DEBUG_TIME"];
+
+/* -----Functions------ */
 
 var prepareLogEntry = function(entry) {
     if (logTime) {
@@ -16,12 +31,18 @@ var prepareLogEntry = function(entry) {
 
 // Writes to standard error.
 var writeToStderr = function(msg) {
-    system.stderr.writeLine(prepareLogEntry(msg));
+    msg = prepareLogEntry(msg);
+    if (_system.stderr) {
+        _system.stderr.writeLine(msg);
+    }
+    else { //PhantomJS versions prior to 1.9.
+        fs.write("/dev/stderr", prepareLogEntry(msg) + "\n");
+    }
 }
 
 // Write to terminal. Note: This could be replaced by writeToStderr.
 var writeToTerminal = function(msg) {
-    if (os.name == "linux") {
+    if (_os.name == "linux") {
 	   fs.write("/dev/tty", prepareLogEntry(msg) + "\n");
     }
     else {
@@ -31,8 +52,14 @@ var writeToTerminal = function(msg) {
 
 // Writes to standard out.
 var writeToConsoleLog = function(msg) {
-    console.log(prepareLogEntry(msg));
+    console.log(msg);
 };
+
+var writeDebugInfo = function(msg) {
+    if (debug) {
+        writeToTerminal(msg);
+    }
+}
 
 // Error handler that outputs the error message and stack trace to std error.
 var errorHandler = function(msg, trace) {
@@ -65,7 +92,7 @@ var resourceEndsWith = function(resource, suffix) {
 }
 
 // Subscribe to some of the events of the webpage.
-var subscribeToPageEvents = function(page, debug) {    
+var subscribeToPageEvents = function(page) {    
     
     page.onAlert = function(msg) {
         writeToTerminal("->ALERT: " + msg);
@@ -86,18 +113,21 @@ var subscribeToPageEvents = function(page, debug) {
         // Note: url is a variable in all scrape scripts. Remember that this code is
         // injected (phantom.injectJs).
         if (!resourceEndsWith(requestData.url.toString(), url)) {
-            networkRequest.abort();
-            if (debug) {
-                writeToTerminal('->Request (#' + requestData.id + '): ' + requestData.url);
-                writeToTerminal('No match with Url: ' + url);
+            writeDebugInfo('->Request (#' + requestData.id + '): ' + requestData.url);
+            writeDebugInfo('No match with Url: ' + url);
+            if (networkRequest) {
+                networkRequest.abort();
             }
         }
     };
     
     page.onResourceTimeout = function(request) {
-        writeToTerminal('<-Response (#' + request.id + '): ' + request.url);
+        writeToTerminal('<-ResourceTimeout (#' + request.id + '): ' + request.url);
+        writeToTerminal('errorString: ' + request.errorString + '(' + request.errorCode + ')');
+        phantom.exit(1);
     };
     
+    // Depending on the value of the DEBUG environment variable, subscribe to more events. 
     if (debug) {
         page.onError = errorHandler;
         
@@ -117,11 +147,11 @@ var subscribeToPageEvents = function(page, debug) {
             writeToTerminal('<-Response (#' + response.id + ', stage "' + response.stage + '"): ' /*+ JSON.stringify(response)*/);
         };
         
-        /*
+        
         page.onResourceError = function(resourceError) {
             writeToTerminal('->ResourceError: Unable to load resource (#' + resourceError.id + 'URL:' + resourceError.url + ')');
             writeToTerminal('Error code: ' + resourceError.errorCode + '. Description: ' + resourceError.errorString);
-        };*/
+        };
     }
 }
 
@@ -153,6 +183,8 @@ var tryCatchWrapper = function(funct, ctx) {
 // NOTE: Any other params passed will be added to a context object
 //       that will be passed to func.
 var scrape = function(url, func) {
+    writeDebugInfo("***** scrape(" + url + ") *****");
+    
     var otherArgs = [];
     for (var i = 2; i < arguments.length; i++) {
         otherArgs.push(arguments[i]);    
@@ -163,19 +195,24 @@ var scrape = function(url, func) {
         otherArgs: otherArgs
     };
     
-    var page = webpage.create();
+    var page = _webpage.create();
+
+    // page.settings.resourceTimeout = 5000; // 5 seconds
+    // page.settings.loadImages = false;
+    // page.settings.javascriptCanOpenWindows = false;
     
     // By default we do not was errors during loading the page
     // to polute the output.
     page.onError = doNothingHandler;
-    // Subscribe to various events depending on the value of the DEBUG 
-    // environment variable. 
-    subscribeToPageEvents(page, env["DEBUG"]);
+    // Subscribe to various events.
+    subscribeToPageEvents(page);
     
     var fatalErrorOccured = false;
     
     page.open(url, function(status) {
-        if ( status === "success" ) {     
+        if ( status === "success" ) {
+            writeDebugInfo("Page opened succefully.");
+            
             // By subscribing to the console messages after the page has
             // been loaded we avoid the messages of the page.
             page.onConsoleMessage = writeToConsoleLog;
@@ -191,8 +228,8 @@ var scrape = function(url, func) {
                 fatalErrorOccured = true;                
                 writeToStderr(JSON.stringify({ Error: error }));
             }
-        }// If status == "success"
-        else {
+        }
+        else { // Failed to open page.
             fatalErrorOccured = true;
             errorHandler("Failed to open " + url);
         }
@@ -203,9 +240,21 @@ var scrape = function(url, func) {
     });
 }
 
+//phantom.exit(1);
+//this is a timeout to make sure the phantom process eventually stops
+// window.setTimeout(function(){
+//     writeToStderr("Timed out!");
+//     phantom.exit(1);
+// }, 100000);
+
+phantom.onError = function(msg, trace) {
+    errorHandler(msg, trace);
+    phantom.exit(1);
+}
+
 // Inject JQuery
 if (phantom.injectJs("jquery.min.js") === false) {
-    system.stderr.writeLine("Missing jquery.min.js file.");
+    writeToStderr("Missing jquery.min.js file.");
     phantom.exit(2);
 }
 
@@ -236,11 +285,12 @@ var send = function (type, url, filename, transform) {
     try {    
         while (!file.atEnd()) {
             var line = file.readLine();
+            var data = null;
             try {
-                var data = JSON.parse(line);
+                data = JSON.parse(line);
             } catch (e) {
-                system.stderr.writeLine("Could not parse: " + line);
-                system.stderr.writeLine(JSON.stringify(e));
+                writeToStderr("Could not parse: " + line);
+                writeToStderr(JSON.stringify(e));
                 return 1;
             }
             
@@ -248,8 +298,8 @@ var send = function (type, url, filename, transform) {
                 try {
                     data = transform(data);
                 } catch (e) {
-                    system.stderr.writeLine("Error while transforming data.");
-                    system.stderr.writeLine(JSON.stringify(e));
+                    writeToStderr("Error while transforming data.");
+                    writeToStderr(JSON.stringify(e));
                     return 1;
                 }
             }
@@ -267,12 +317,12 @@ var send = function (type, url, filename, transform) {
                 },
                 error: function (xhr, status, thrown) {
                     errorCount++;
-                    system.stderr.writeLine(status);
-                    system.stderr.writeLine(JSON.stringify(xhr));
+                    writeToStderr(status);
+                    writeToStderr(JSON.stringify(xhr));
                 },
                 complete: function (xhr, status) {
-                    //system.stderr.writeLine(status);
-                    //system.stderr.writeLine(JSON.stringify(xhr));
+                    //writeToStderr(status);
+                    //writeToStderr(JSON.stringify(xhr));
                 }
             });
         }
