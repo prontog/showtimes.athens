@@ -1,7 +1,12 @@
+/*jslint nomen:true, vars:true, devel:true, browser:true, white:true */
+/*globals _:true, $:true */
+/*globals require:true, phantom:true, writeToStderr:true, scrape:true */
+"use strict";
+
 var system = require("system");
 
 // Inject common code. Includes error handling.
-if (phantom.injectJs("common.js") == false) {
+if (phantom.injectJs("common.js") === false) {
     console.log("Missing common.js file.");
     phantom.exit(2);
 }
@@ -11,7 +16,7 @@ var args = system.args;
 var url = null;
 var filmId = null;
 
-if (args.length != 3) {
+if (args.length !== 3) {
     writeToStderr("usage: phantomjs " + phantom.scriptName + " FILM_ID URL");
     phantom.exit(1);
 } else {
@@ -32,7 +37,7 @@ scrape(url, function(ctx) {
         
         var $next = $piatsaName.next();
         ctx.check($next, "$next");
-        while ($next[0] && $next[0].tagName == "TABLE")
+        while ($next[0] && $next[0].tagName === "TABLE")
         {
             var $table = $next;
             

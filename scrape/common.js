@@ -1,3 +1,8 @@
+/*jslint nomen:true, vars:true, devel:true, browser:true, white:true */
+/*globals _:true, $:true */
+/*globals require:true, phantom:true */
+"use strict";
+
 var fs = require("fs");
 var _webpage = require('webpage');
 var _system = require("system");
@@ -7,7 +12,7 @@ var _os = _system.os;
 // Check PhantomJS version. Versions prion to 1.9 are not suppoerted on Windows.
 //This is because system.stderr was introduced in version 1.9.
 var phantomVersion = phantom.version;
-if (_os.name == "windows" 
+if (_os.name === "windows" 
     && phantomVersion.major < 2 
     && phantomVersion.minor < 9) {
     console.log("PhantomJS versions prion to 1.9 are not supported on Windows.");
@@ -27,7 +32,7 @@ var prepareLogEntry = function(entry) {
     }
     
     return entry;
-}
+};
 
 // Writes to standard error.
 var writeToStderr = function(msg) {
@@ -38,17 +43,17 @@ var writeToStderr = function(msg) {
     else { //PhantomJS versions prior to 1.9.
         fs.write("/dev/stderr", prepareLogEntry(msg) + "\n");
     }
-}
+};
 
 // Write to terminal. Note: This could be replaced by writeToStderr.
 var writeToTerminal = function(msg) {
-    if (_os.name == "linux") {
+    if (_os.name === "linux") {
 	   fs.write("/dev/tty", prepareLogEntry(msg) + "\n");
     }
     else {
         writeToStderr(msg);
     }
-}
+};
 
 // Writes to standard out.
 var writeToConsoleLog = function(msg) {
@@ -59,7 +64,7 @@ var writeDebugInfo = function(msg) {
     if (debug) {
         writeToTerminal(msg);
     }
-}
+};
 
 // Error handler that outputs the error message and stack trace to std error.
 var errorHandler = function(msg, trace) {
@@ -89,7 +94,7 @@ var resourceEndsWith = function(resource, suffix) {
     }
     
     return resource.indexOf(suffix, resource.length - suffix.length) !== -1;
-}
+};
 
 // Subscribe to some of the events of the webpage.
 var subscribeToPageEvents = function(page) {    
@@ -137,7 +142,7 @@ var subscribeToPageEvents = function(page) {
             writeToTerminal('Caused by: ' + type);
             writeToTerminal('Will actually navigate: ' + willNavigate);
             writeToTerminal("Sent from the page's main frame: " + main);
-        }
+        };
         
         page.onUrlChanged = function(targetUrl) {
             writeToTerminal('->UrlChanged: ' + targetUrl);
@@ -153,7 +158,7 @@ var subscribeToPageEvents = function(page) {
             writeToTerminal('Error code: ' + resourceError.errorCode + '. Description: ' + resourceError.errorString);
         };
     }
-}
+};
 
 // Wrap a scrape function inside a try-catch block and return
 // the exception if any. Otherwise return null.
@@ -163,7 +168,7 @@ var tryCatchWrapper = function(funct, ctx) {
         if ( ! $obj.length) {
             throw "check $obj=" + objName + " failed.";
         }
-    }
+    };
     
     ctx.check = check;
     
@@ -175,7 +180,7 @@ var tryCatchWrapper = function(funct, ctx) {
     }
     
     return null;
-}
+};
 
 // Scrapes a url using custom scrape function (func).
 // url is the url of the webpage to scrape.

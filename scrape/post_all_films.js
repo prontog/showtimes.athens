@@ -1,8 +1,12 @@
+/*jslint nomen:true, vars:true, devel:true, browser:true, white:true */
+/*globals _:true, $:true */
+/*globals require:true, phantom:true, writeToStderr:true, post:true */
 "use strict";
+
 var system = require("system");
 
 // Inject common code. Includes error handling.
-if (phantom.injectJs("common.js") == false) {
+if (phantom.injectJs("common.js") === false) {
     system.stderr.writeLine("Missing common.js file.");
     phantom.exit(2);
 }

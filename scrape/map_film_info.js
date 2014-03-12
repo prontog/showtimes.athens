@@ -1,8 +1,13 @@
+/*jslint nomen:true, vars:true, devel:true, browser:true, white:true */
+/*globals _:true, $:true */
+/*globals require:true, phantom:true, writeToStderr:true */
+"use strict";
+
 var system = require("system");
 var fs = require("fs");
 
 // Inject common code. Includes error handling.
-if (phantom.injectJs("common.js") == false) {
+if (phantom.injectJs("common.js") === false) {
     console.log("Missing common.js file.");
     phantom.exit(2);
 }
@@ -11,7 +16,7 @@ if (phantom.injectJs("common.js") == false) {
 var args = system.args;
 var filename = null;
 
-if (args.length != 2) {
+if (args.length !== 2) {
     writeToStderr("usage: phantomjs " + phantom.scriptName + " FILMS_FILE");
     phantom.exit(1);
 } else {

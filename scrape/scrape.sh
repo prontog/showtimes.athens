@@ -2,9 +2,8 @@
 # Scrape film info and showtimes from athinorama.gr.
 
 URL_CINEMA=http://www.athinorama.gr/cinema/
-#URL_CINEMA=cinema.html
+URL_NEW_ARRIVALS=http://www.athinorama.gr/cinema/guide.aspx?new=1
 URL_ALL_FILMS=http://www.athinorama.gr/cinema/guide.aspx?show=1
-#URL_ALL_FILMS=guide.html
 URL_ATHINORAMA=http://www.athinorama.gr
 
 DIR_TMP=./tmp
@@ -80,18 +79,11 @@ trap 'clean_up; exit 1' TERM INT
 echo +New arrivals
 # Scraped URLs are stored to a file as well as output to STDOUT.
 echo scraping URLs...
-if ! phantomjs scrape_new_arrivals.js $URL_CINEMA > $FN_NEW_ARRIVAL_URLS
+if ! phantomjs scrape_all_films.js $URL_NEW_ARRIVALS > $FN_NEW_ARRIVAL_URLS
 then 
     exit 
 fi
 scrape_films $FN_NEW_ARRIVAL_URLS $FN_NEW_ARRIVALS
-## Add the newArrival field with value true. -c is for compact output.
-#if ! jq -c '(.newArrival = true)' $FN_NEW_ARRIVALS > ${FN_NEW_ARRIVALS}.tmp
-#then 
-#    exit
-#else
-#    mv ${FN_NEW_ARRIVALS}.tmp ${FN_NEW_ARRIVALS}
-#fi 
 
 # Scrape all films.
 echo +All films
@@ -115,8 +107,11 @@ do
     FILM_URL=http://www.athinorama.gr/lmnts/events/cinema/${FILM_ID}/Poster.jpg
     echo downloading $FILM_URL
     curl -L $FILM_URL > ${DIR_IMAGES}/${FILM_ID}.jpg
-    echo scraping ${URL_ATHINORAMA}/${SHOWTIMES_URL}
-    phantomjs scrape_film_showtimes.js $FILM_ID ${URL_ATHINORAMA}/${SHOWTIMES_URL} >> $FN_SHOWTIMES 
+    echo scraping ${URL_CINEMA}${SHOWTIMES_URL}
+    if ! phantomjs scrape_film_showtimes.js $FILM_ID ${URL_CINEMA}${SHOWTIMES_URL} >> $FN_SHOWTIMES
+    then
+        exit
+    fi
 done < $FN_FILM_INFO
 
 # Rename the tmp folder now that the process has completed successfully.
