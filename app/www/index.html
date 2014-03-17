@@ -44,47 +44,68 @@
             app.initialize();
         </script>
 -->
-        <div id="main" data-role="page" data-theme="a">
+        <div id="main" data-role="page" data-dom-cache="true" data-theme="a">
 			<div data-role="header" data-position="inline">
-				<h1>Athens</h1>
+				<h1>Showtimes.Athens</h1>
 			</div>
 			<div data-role="content" data-theme="a">
-				<ul data-role="listview" data-inset="true" data-filter="true">
-                    <li><a href="#new">New</a></li>
-                    <li><a href="#all">All</a></li>
-                    <li><a href="#">By category</a></li>
-                    <li><a href="#">By area</a></li>
+				<ul data-role="listview" data-inset="true">
+                    <li><a href="#new">Νέες ταινίες</a></li>
+                    <li><a href="#all">'Ολες οι ταινίες</a></li>
+                    <li><a href="#categories">Ανά κατηγορία</a></li>
+                    <li><a href="#areas">Ανά περιοχή</a></li>
                 </ul>
 			</div>
             <div data-role="footer" data-position="inline">
 				<h1></h1>
 			</div>
 		</div>
-        <div id="new" data-role="page" data-theme="a">
+        <div id="new" data-role="page" data-add-back-btn="true" data-dom-cache="true" data-theme="a">
 			<div data-role="header" data-position="inline">
-				<h1>New arrivals</h1>
+				<h1>Νέες ταινίες</h1>
 			</div>
 			<div data-role="content" data-theme="a">
 				<ul data-role="listview" data-inset="true" data-filter="true">                    
                 </ul>
 			</div>
+            <div data-role="footer" data-position="inline">
+				<h1></h1>
+			</div>
 		</div>
-        <div id="all" data-role="page" data-theme="a">
+        <div id="all" data-role="page" data-add-back-btn="true" data-dom-cache="true" data-theme="a">
 			<div data-role="header" data-position="inline">
-				<h1>All films</h1>
+				<h1>'Ολες οι ταινίες</h1>
 			</div>
 			<div data-role="content" data-theme="a">
 				<ul data-role="listview" data-inset="true" data-filter="true">
                 </ul>
 			</div>
+            <div data-role="footer" data-position="inline">
+				<h1></h1>
+			</div>
 		</div>
-        <div id="categories" data-role="page" data-theme="a">
+        <div id="categories" data-role="page" data-add-back-btn="true" data-dom-cache="true" data-theme="a">
 			<div data-role="header" data-position="inline">
-				<h1>Categories</h1>
+				<h1>Ανά κατηγορία</h1>
 			</div>
 			<div data-role="content" data-theme="a">
 				<ul data-role="listview" data-inset="true" data-filter="true">
                 </ul>
+			</div>
+            <div data-role="footer" data-position="inline">
+				<h1></h1>
+			</div>
+		</div>
+        <div id="areas" data-role="page" data-add-back-btn="true" data-dom-cache="true" data-theme="a">
+			<div data-role="header" data-position="inline">
+				<h1>Ανά περιοχή</h1>
+			</div>
+			<div data-role="content" data-theme="a">
+				<ul data-role="listview" data-inset="true" data-filter="true">
+                </ul>
+			</div>
+            <div data-role="footer" data-position="inline">
+				<h1></h1>
 			</div>
 		</div>
         <script src="js/jquery-1.10.2.min.js"></script>

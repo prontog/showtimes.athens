@@ -179,7 +179,7 @@ var views = {
         $ul.empty();
         
         var items = [];
-        _.forEach(films, function(f) {
+        _.chain(films).sortBy("title").forEach(function(f) {
             items.push(views.renderFilm(f));
         });
         // Add new elements.
@@ -193,9 +193,9 @@ var views = {
         // Remove all elements from the list.
         $ul.empty();
         
-        var categories = _.map(films, function(o) {
+        var categories = _.chain(films).map(function(o) {
             return o.category;
-        });
+        }).uniq().sort().value();
         
         var items = [];
         _.forEach(categories, function(c) {
@@ -214,11 +214,14 @@ var views = {
     },
     bindEvents: function() {
         $.subscribe(events.LOADING_COMPLETED, views.prepareAll);
-        $.subscribe(events.NEW_FILMS_LOADED, function(e, dataStore) {
-            views.prepareFilms(data.newFilms, $("#new ul"));
+        $.subscribe(events.NEW_FILMS_LOADED, function(e, films) {
+            views.prepareFilms(films, $("#new ul"));
         });
-        $.subscribe(events.ALL_FILMS_LOADED, function(e, dataStore) {
-            views.prepareFilms(data.allFilms, $("#all ul"));
+        $.subscribe(events.ALL_FILMS_LOADED, function(e, films) {
+            views.prepareFilms(films, $("#all ul"));
+        });
+        $.subscribe(events.ALL_FILMS_LOADED, function(e, films) {
+            views.prepareCategories(films, $("#categories ul"));
         });
     }
 };
