@@ -16,6 +16,7 @@ FN_ALL_FILMS_URLS=$DIR_TMP/all_films.url
 FN_ALL_FILMS=$DIR_TMP/all_films.json
 FN_FILM_INFO=$DIR_TMP/films.info
 FN_SHOWTIMES=$DIR_TMP/showtimes.json
+FN_UPDATE_INFO=$DIR_TMP/update_info.json
 
 function scrape_films
 {
@@ -113,6 +114,12 @@ do
         exit
     fi
 done < $FN_FILM_INFO
+
+echo +UpdateInfo
+if ! phantomjs prepare_update_info.js > $FN_UPDATE_INFO
+then
+    exit
+fi
 
 # Rename the tmp folder now that the process has completed successfully.
 DIR_OUT_CURR=$DIR_OUT/$(date +%Y%m%d_%H%M%S)
