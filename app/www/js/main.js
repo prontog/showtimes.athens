@@ -22,22 +22,28 @@ var logger = {
 };
 
 var events = {
+    // General events.
     FILE_SYSTEM_READY: "fs_ok",
-    NEW_FILMS_DOWNLOADED: "new_d",
-    NEW_FILMS_LOADED: "new_l",
+    DOWNLOADING_COMPLETED: "down_ok",
+    LOADING_COMPLETED: "load_ok",
+    STALE_DATA: "stale",
+    FRESH_DATA: "fresh",
+    // Events for specific files.
+    UPDATE_INFO_DOWNLOADED: "update_d",
+    UPDATE_INFO_LOADED: "update_l",
+    NEW_ARRIVALS_DOWNLOADED: "new_d",
+    NEW_ARRIVALS_LOADED: "new_l",
     ALL_FILMS_DOWNLOADED: "all_films_d",
     ALL_FILMS_LOADED: "all_films_l",
     SHOWTIMES_DOWNLOADED: "show_d",
-    SHOWTIMES_LOADED: "show_l",
-    DOWNLOADING_COMPLETED: "down_ok",
-    LOADING_COMPLETED: "load_ok"
+    SHOWTIMES_LOADED: "show_l"
 };
 
 var appFS= {
     SIZE: 5 * 1024 * 1024,
     _fs: null,
     root: null,
-    errorHandler: function(e) {
+    defaultErrorHandler: function(e) {
         var msg = '';
     
         switch (e.code) {
@@ -62,6 +68,16 @@ var appFS= {
         }
 
         logger.error(msg);
+        logger.error(JSON.stringify(e));
+    },
+    // Wraps an error handler function so that the default hanlder is also called.
+    wrapErrorHandler: function(someHandler) {
+        return function() {
+            appFS.defaultErrorHandler();
+            if (someHandler) {
+                someHandler();
+            }
+        };
     },
     // Initiate the filesystem.
     init: function (callback) {
@@ -75,11 +91,11 @@ var appFS= {
                 appFS.root = appFS._fs.root;
                 // Notify subscribers that the file system is ready.
                 $.publish(events.FILE_SYSTEM_READY);
-            }, appFS.errorHandler);
+            }, appFS.defaultErrorHandler);
         }
     },
     // Read the contents of a file to an array.
-    readFile: function(fileURL, success) {
+    readFile: function(fileURL, success, error) {
         logger.log("appFS.readFile " + fileURL);
         appFS.root.getFile(fileURL, {}, function(fileEntry) {
             logger.log("appFS.root.getFile " + fileURL);
@@ -98,58 +114,126 @@ var appFS= {
                 };
                 
                 reader.readAsText(file);
-            }, appFS.errorHandler);    
-        }, appFS.errorHandler);
+            }, appFS.defaultErrorHandler);    
+        }, appFS.wrapErrorHandler(error));
     }
 };
 
 var data = {
+    updateInfo: {},
     newFilms: [],
     allFilms: [],
     showtimes: [],
-    loadFromFile: function(filename, to, callback) {
+    loadSingleObject: function(text) {
+        var retObj = {};
+        
+        try {
+            if (text.length > 0) {
+                retObj = JSON.parse(text);
+            }
+        }
+        catch(e) {
+            logger.error("parsing " + text);
+        }
+        
+        return retObj;
+    },
+    download: function(url, fileURL, success, error) {
+        logger.log("data.download: " + fileURL);
+        var fileTransfer = new FileTransfer();
+        var uri = encodeURI(url);
+        
+        fileTransfer.download(
+            uri,
+            fileURL,
+            function(entry) {
+                logger.log("Download completed: " + entry.fullPath);
+                if (success) {
+                    success(entry.fullPath);
+                }
+            },
+            function(e) {
+                logger.error("downloading " + JSON.stringify(e));
+                if (error) {
+                    error();
+                }
+            }
+        );
+    },
+    loadFromFile: function(filename, to, success, error) {
         logger.log("data.loadFromFile");
         appFS.readFile(filename, function(text) {
-            var allLines = text.split("\n");
-            
-            logger.log("Number of lines:" + allLines.length);
-            
-            // Clear the array;
-            to.length = 0;
-            // Parse each line and add to the array.
-            _.forEach(allLines, function(line) {
-                try {
-                    if (line.length > 0) {
-                        to.push(JSON.parse(line));
+            if ($.isArray(to)) {
+                var allLines = text.split("\n");
+                logger.log("Number of lines:" + allLines.length);
+                
+                // Clear the array.
+                to.length = 0;
+                // Parse each line and add to the array.
+                _.forEach(allLines, function(line) {
+                    if (line) {
+                        to.push(data.loadSingleObject(line));
                     }
+                });
+                
+                if (success) {
+                    success(filename);
                 }
-                catch(e) {
-                    logger.error("parsing " + line);
-                }
-            });
-            
-            if (callback) {
-                callback();
             }
-        });
+            else {
+                logger.error("data.loadFromFile: Invalid argument type. 'to' is not an array.");
+            }
+        }, error);
     },
     tmp: {
+        updateInfo: {},
         newFilms: [],
         allFilms: [],
         showtimes: []
     },
     exchange: function() {
         logger.log("data.exchange");
+        data.updateInfo = data.tmp.updateInfo;
         data.newFilms = data.tmp.newFilms;
         data.allFilms = data.tmp.allFilms;
         data.allShowtimes = data.tmp.showtimes;
     },
+    // Returns true if the data are more than 7 days old.
+    needsUpdate: function() {
+        var diff = new Date().getTime() - data.updateInfo.date;
+        var diffDate = new Date(diff);
+        logger.log("data.needsUpdate: " + JSON.stringify({diff: diff, 
+                                                          days: diffDate.getUTCDate(), 
+                                                          months: diffDate.getUTCMonth(),
+                                                          years: diffDate.getFullYear()}));
+        return  diffDate.getUTCDate() > 7 || 
+                diffDate.getUTCMonth > 0  ||
+                diffDate.getFullYear > 1970;
+    },
     bindEvents: function() {
         logger.log("data.bindEvents");
+        
         $.subscribe(events.DOWNLOADING_COMPLETED, data.exchange);
-        $.subscribe(events.NEW_FILMS_DOWNLOADED, function(e, filename) {
+        
+        $.subscribe(events.UPDATE_INFO_DOWNLOADED, function(e, filename, error) {
+            var dataContainer = [];
+            data.loadFromFile(filename, dataContainer, function() {
+                data.updateInfo = dataContainer[0];
+                logger.log(JSON.stringify(data.updateInfo));
+                
+                $.publish(events.UPDATE_INFO_LOADED, [data.updateInfo]);
+                
+                if (data.needsUpdate()) {                    
+                    $.publish(events.STALE_DATA);
+                }
+                else {
+                    $.publish(events.FRESH_DATA);
+                }
+            }, error);
+        });
+        $.subscribe(events.NEW_ARRIVALS_DOWNLOADED, function(e, filename) {
             data.loadFromFile(filename, data.newFilms, function() {
-                $.publish(events.NEW_FILMS_LOADED, [data.newFilms]);                        
+                $.publish(events.NEW_ARRIVALS_LOADED, [data.newFilms]);                        
             });
         });
         $.subscribe(events.ALL_FILMS_DOWNLOADED, function(e, filename) {
@@ -171,6 +255,9 @@ var views = {
     },
     renderSimple: function(title) {
         return "<li><a href=\"#\">" + title + "</a></li>";
+    },
+    downloadError: function() {
+        $("div[data-role='footer']").html("Η ενημέρωση απέτυχε");
     },
     prepareFilms: function(films, $ul) {
         logger.log("views.loadFilms: started");
@@ -214,7 +301,10 @@ var views = {
     },
     bindEvents: function() {
         $.subscribe(events.LOADING_COMPLETED, views.prepareAll);
-        $.subscribe(events.NEW_FILMS_LOADED, function(e, films) {
+        $.subscribe(events.UPDATE_INFO_LOADED, function(e, updateInfo) {
+            $("div[data-role='footer']").html("Τελευταία ενημέρωση:" + new Date(updateInfo.date).toDateString());
+        });
+        $.subscribe(events.NEW_ARRIVALS_LOADED, function(e, films) {
             views.prepareFilms(films, $("#new ul"));
         });
         $.subscribe(events.ALL_FILMS_LOADED, function(e, films) {
@@ -227,14 +317,24 @@ var views = {
 };
 
 var app = {
-    URL_NEW_ARRIVALS: "https://raw.github.com/prontog/showtimes.athens/29ebb8a168cea468bee2e47240e88036f4ef173f/scrape/samples/new_arrivals.json",
+    URL_NEW_ARRIVALS: "https://raw.github.com/prontog/showtimes.athens/master/scrape/samples/new_arrivals.json",
     URL_ALL_FILMS: "https://raw.github.com/prontog/showtimes.athens/master/scrape/samples/all_films.json",
+    URL_SHOWTIMES: "https://raw.github.com/prontog/showtimes.athens/master/scrape/samples/showtimes.json",
+    URL_UPDATE_INFO: "https://raw.github.com/prontog/showtimes.athens/master/scrape/samples/update_info.json",
     FILE_NEW_ARRIVALS: "new_arrivals.json",
     FILE_ALL_FILMS: "all_films.json",
+    FILE_SHOWTIMES: "showtimes.json",
+    FILE_UPDATE_INFO: "update_info.json",
     
     initialize: function() {
         logger.log("app.initialize");
         this.bindEvents();
+    },
+    // Loads everything from file system.
+    load: function() {
+        $.publish(events.NEW_ARRIVALS_DOWNLOADED, [app.FILE_NEW_ARRIVALS]);
+        $.publish(events.ALL_FILMS_DOWNLOADED, [app.FILE_ALL_FILMS]);
+        $.publish(events.SHOWTIMES_DOWNLOADED, [app.FILE_SHOWTIMES]);
     },
     // Bind Event Listeners
     //
@@ -245,15 +345,21 @@ var app = {
         document.addEventListener('deviceready', this.onDeviceReady, false);        
         // FILE_SYSTEM_READY event. 
         $.subscribe(events.FILE_SYSTEM_READY, function() {
-            var needsUpdate = true;
-            
-            if (needsUpdate) {
-                app.update();    
-            }
-            else {
-                views.prepareAll();
-            }
+            // Notify that the update-info file is available. If the loading (subscribed 
+            // to this events) fails, the file re-downloaded one more time. This is for the
+            // case where the update-info file does not exist on the local file system.
+            $.publish(events.UPDATE_INFO_DOWNLOADED, [app.FILE_UPDATE_INFO, function() {
+                data.download(app.URL_UPDATE_INFO, 
+                      appFS.root.toURL() + app.FILE_UPDATE_INFO, 
+                      function(filename) {
+                        $.publish(events.UPDATE_INFO_DOWNLOADED, [filename]);
+                      },
+                      views.downloadError);
+            }]);
         });
+        
+        $.subscribe(events.STALE_DATA, app.update);
+        $.subscribe(events.FRESH_DATA, app.load);
         
         data.bindEvents();
         views.bindEvents();
@@ -262,46 +368,31 @@ var app = {
     receivedEvent: function(id) {
         logger.log('Received Event: ' + id);
     },    
-    download: function(url, filename, callback) {
-        logger.log("app.download");
-        var fileTransfer = new FileTransfer();
-        var uri = encodeURI(url);
-        var fileURL = appFS.root.toURL() + filename;
-
-        fileTransfer.download(
-            uri,
-            fileURL,
-            function(entry) {
-                logger.log("Download completed: " + entry.fullPath);
-                if (callback) {
-                    callback();
-                }
-            },
-            function(error) {
-                logger.error("downloading " + JSON.stringify(error));
-                $("div[data-role='footer']").html("download failed");
-            }
-        );
-    },
     update: function() {
         logger.log("app.update");
-        this.download(app.URL_NEW_ARRIVALS, 
-                      app.FILE_NEW_ARRIVALS, 
-                      function() {
-                        $.publish(events.NEW_FILMS_DOWNLOADED, [app.FILE_NEW_ARRIVALS]);
-                      });
         
-        this.download(app.URL_ALL_FILMS, 
-                      app.FILE_ALL_FILMS, 
-                      function() {
-                        $.publish(events.ALL_FILMS_DOWNLOADED, [app.FILE_ALL_FILMS]);
-                      });
+        var rootURL = appFS.root.toURL();
         
-        this.download(app.URL_SHOWTIMES,
-                      app.FILE_SHOWTIMES,
-                      function() {
-                        $.publish(events.SHOWTIMES_DOWNLOADED, [app.FILE_SHOWTIMES]);
-                      });
+        data.download(app.URL_NEW_ARRIVALS, 
+                      rootURL + app.FILE_NEW_ARRIVALS, 
+                      function(filename) {
+                        $.publish(events.NEW_ARRIVALS_DOWNLOADED, [filename]);
+                      },
+                      views.downloadError);
+        
+        data.download(app.URL_ALL_FILMS, 
+                      rootURL + app.FILE_ALL_FILMS, 
+                      function(filename) {
+                        $.publish(events.ALL_FILMS_DOWNLOADED, [filename]);
+                      },
+                      views.downloadError);
+        
+        data.download(app.URL_SHOWTIMES,
+                      rootURL + app.FILE_SHOWTIMES,
+                      function(filename) {
+                        $.publish(events.SHOWTIMES_DOWNLOADED, [filename]);
+                      },
+                      views.downloadError);
     },
     // deviceready Event Handler
     //
@@ -312,3 +403,4 @@ var app = {
         appFS.init();
     }
 };
+ 
