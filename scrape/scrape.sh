@@ -27,10 +27,7 @@ function scrape_films
     while read film_url
     do
         echo scraping ${URL_CINEMA}${film_url}...
-        if ! phantomjs scrape_film.js ${URL_CINEMA}$film_url >> $2
-        then
-            exit
-        fi
+        phantomjs scrape_film.js ${URL_CINEMA}$film_url >> $2        
     done < $1
 }
 
@@ -46,7 +43,6 @@ function clean_up
     if [ -d $DIR_TMP ]
     then
         rm -vf $DIR_TMP/*
-        #rmdir $DIR_TMP
     fi
 }
 
@@ -75,32 +71,27 @@ prepare_dir $DIR_OUT
 
 # Clean up the temp dir if interrupted by control-c.
 trap 'clean_up; exit 1' TERM INT
+# Enabling auto exit when a command fails. This simplifies error-handling.
+# Note that this excludes commands following the if keyword as well as other
+# cases mentioned in the BASH manual pages.
+set -o errexit
 
 # Scrape new films.
 echo +New arrivals
 # Scraped URLs are stored to a file as well as output to STDOUT.
 echo scraping URLs...
-if ! phantomjs scrape_all_films.js $URL_NEW_ARRIVALS > $FN_NEW_ARRIVAL_URLS
-then 
-    exit 
-fi
+phantomjs scrape_all_films.js $URL_NEW_ARRIVALS > $FN_NEW_ARRIVAL_URLS
 scrape_films $FN_NEW_ARRIVAL_URLS $FN_NEW_ARRIVALS
 
 # Scrape all films.
 echo +All films
 # Scraped URLs are stored to a file as well as output to STDOUT.
 echo scraping URLs...
-if ! phantomjs scrape_all_films.js $URL_ALL_FILMS > $FN_ALL_FILMS_URLS
-then 
-    exit 
-fi
+phantomjs scrape_all_films.js $URL_ALL_FILMS > $FN_ALL_FILMS_URLS
 scrape_films $FN_ALL_FILMS_URLS $FN_ALL_FILMS
 
 echo +Images and Shotimes
-if ! phantomjs map_film_info.js $FN_ALL_FILMS > $FN_FILM_INFO
-then
-    exit
-fi
+phantomjs map_film_info.js $FN_ALL_FILMS > $FN_FILM_INFO
 
 while read FILM_ID FILM_URL SHOWTIMES_URL
 do
@@ -109,17 +100,11 @@ do
     echo downloading $FILM_URL
     curl -L $FILM_URL > ${DIR_IMAGES}/${FILM_ID}.jpg
     echo scraping ${URL_CINEMA}${SHOWTIMES_URL}
-    if ! phantomjs scrape_film_showtimes.js $FILM_ID ${URL_CINEMA}${SHOWTIMES_URL} >> $FN_SHOWTIMES
-    then
-        exit
-    fi
+    phantomjs scrape_film_showtimes.js $FILM_ID ${URL_CINEMA}${SHOWTIMES_URL} >> $FN_SHOWTIMES    
 done < $FN_FILM_INFO
 
 echo +UpdateInfo
-if ! phantomjs prepare_update_info.js > $FN_UPDATE_INFO
-then
-    exit
-fi
+phantomjs prepare_update_info.js > $FN_UPDATE_INFO
 
 # Rename the tmp folder now that the process has completed successfully.
 DIR_OUT_CURR=$DIR_OUT/$(date +%Y%m%d_%H%M%S)
