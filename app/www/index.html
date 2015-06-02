@@ -30,23 +30,10 @@
         <title>Showtimes</title>
     </head>
     <body>
-<!--
-        <div class="app">
-            <h1>Apache Cordova</h1>
-            <div id="deviceready" class="blink">
-                <p class="event listening">Connecting to Device</p>
-                <p class="event received">Device is Ready</p>
-            </div>
-        </div>
-        <script type="text/javascript" src="cordova.js"></script>
-        <script type="text/javascript" src="js/index.js"></script>
-        <script type="text/javascript">
-            app.initialize();
-        </script>
--->
         <div id="main" data-role="page" data-dom-cache="true" data-theme="a">
 			<div data-role="header" data-position="inline">
 				<h1>Showtimes.Athens</h1>
+                <a href="#settings" data-icon="gear" class="ui-btn-right">Ρυθμίσεις</a>
 			</div>
 			<div data-role="content" data-theme="a">
 				<ul data-role="listview" data-inset="true">
@@ -54,6 +41,20 @@
                     <li><a href="#all">'Ολες οι ταινίες</a></li>
                     <li><a href="#categories">Ανά κατηγορία</a></li>
                     <li><a href="#areas">Ανά περιοχή</a></li>
+                </ul>
+			</div>
+            <div data-role="footer" data-position="inline">
+				<h1></h1>
+			</div>
+		</div>
+        <div id="settings" data-role="page" data-add-back-btn="true" data-dom-cache="true" data-theme="a">
+			<div data-role="header" data-position="inline">
+				<h1>Ρυθμίσεις</h1>
+			</div>
+			<div data-role="content" data-theme="a">
+				<ul data-role="listview" data-inset="true" data-filter="true">
+                    <li><a href="#update">Ενημέρωση</a></li>
+                    <li><a href="#about">Σχετικά με το app</a></li>
                 </ul>
 			</div>
             <div data-role="footer" data-position="inline">
@@ -103,6 +104,19 @@
 			<div data-role="content" data-theme="a">
 				<ul data-role="listview" data-inset="true" data-filter="true">
                 </ul>
+			</div>
+            <div data-role="footer" data-position="inline">
+				<h1></h1>
+			</div>
+		</div>
+        <div id="film-info" data-role="page" data-theme="a">
+			<div data-role="header" data-position="inline">
+				<h1>Film name</h1>
+			</div>
+			<div data-role="content" data-theme="a">
+				<div id="film-orig-title"></div>
+                <div id="film-year"></div>
+                <div id="film-category"></div>
 			</div>
             <div data-role="footer" data-position="inline">
 				<h1></h1>

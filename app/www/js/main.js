@@ -97,7 +97,7 @@ var appFS= {
     // Read the contents of a file to an array.
     readFile: function(fileURL, success, error) {
         logger.log("appFS.readFile " + fileURL);
-        appFS.root.getFile(fileURL, {}, function(fileEntry) {
+        appFS.root.getFile(fileURL, { create: false }, function(fileEntry) {
             logger.log("appFS.root.getFile " + fileURL);
             // Get a File object representing the file,
             // then use FileReader to read its contents.
@@ -120,10 +120,15 @@ var appFS= {
 };
 
 var data = {
-    updateInfo: {},
+    updateInfo: null,
     newFilms: [],
     allFilms: [],
     showtimes: [],
+    // Find a film by id.
+    film: function(id) {
+        logger.log("data.film " + id);
+        return _.findWhere(data.allFilms, { id: id });
+    },
     loadSingleObject: function(text) {
         var retObj = {};
         
@@ -186,7 +191,7 @@ var data = {
         }, error);
     },
     tmp: {
-        updateInfo: {},
+        updateInfo: null,
         newFilms: [],
         allFilms: [],
         showtimes: []
@@ -199,16 +204,47 @@ var data = {
         data.allShowtimes = data.tmp.showtimes;
     },
     // Returns true if the data are more than 7 days old.
-    needsUpdate: function() {
-        var diff = new Date().getTime() - data.updateInfo.date;
-        var diffDate = new Date(diff);
-        logger.log("data.needsUpdate: " + JSON.stringify({diff: diff, 
-                                                          days: diffDate.getUTCDate(), 
-                                                          months: diffDate.getUTCMonth(),
-                                                          years: diffDate.getFullYear()}));
-        return  diffDate.getUTCDate() > 7 || 
-                diffDate.getUTCMonth > 0  ||
-                diffDate.getFullYear > 1970;
+    needsUpdate: function(lastUpdateInfo) {
+        var msgHeader = "data.needsUpdate: ";
+        var diffDate;
+        
+        logger.log(msgHeader + JSON.stringify(lastUpdateInfo));
+        
+        if (data.updateInfo === null) {
+            return true;
+        }
+        
+        if (lastUpdateInfo) {
+            var diffMs = data.updateInfo.date - lastUpdateInfo.date;
+            if (diffMs === 0) {
+                logger.log(msgHeader + "Data is up to date.");
+                return false;
+            }
+            diffDate = new Date(diffMs);
+        }
+        else {
+            var diffMs = new Date().getTime() - data.updateInfo.date;
+            if (diffMs < 0) {
+                // ToDo: Notify the user. This could end up to a never ending update process.
+                logger.log(msgHeader + "Invalid date. Something went fishy!");
+                return false;
+            }            
+            diffDate = new Date(diffMs);
+        }
+        
+        logger.log(msgHeader + diffDate);
+        
+        var diff = { 
+                diff: diffDate.getTime(), 
+                days: diffDate.getUTCDate(), 
+                months: diffDate.getUTCMonth(),
+                years: diffDate.getFullYear() - 1970
+        };
+        
+        logger.log("data.needsUpdate: " + JSON.stringify(diff));
+        return  diff.days > 7 || 
+                diff.months > 0  ||
+                diff.years > 0;
     },
     bindEvents: function() {
         logger.log("data.bindEvents");
@@ -216,14 +252,17 @@ var data = {
         $.subscribe(events.DOWNLOADING_COMPLETED, data.exchange);
         
         $.subscribe(events.UPDATE_INFO_DOWNLOADED, function(e, filename, error) {
+            // This is a hack, loadFromFile can only load to an array.
             var dataContainer = [];
             data.loadFromFile(filename, dataContainer, function() {
+                var lastUpdateInfo = data.updateInfo;
                 data.updateInfo = dataContainer[0];
-                logger.log(JSON.stringify(data.updateInfo));
+                logger.log("loaded data.updateInfo: " + new Date(data.updateInfo.date));
                 
+                // ToDo: This should be published after the whole update is finished.
                 $.publish(events.UPDATE_INFO_LOADED, [data.updateInfo]);
                 
-                if (data.needsUpdate()) {                    
+                if (data.needsUpdate(lastUpdateInfo)) {                    
                     $.publish(events.STALE_DATA);
                 }
                 else {
@@ -251,13 +290,13 @@ var data = {
 
 var views = {
     renderFilm: function(film) {
-        return "<li><a href=\"#\">" + film.title + "</a></li>";
+        return "<li><a href=\"#film-info?id=" + film.id + "\">" + film.title + "</a></li>";
     },
     renderSimple: function(title) {
         return "<li><a href=\"#\">" + title + "</a></li>";
     },
     downloadError: function() {
-        $("div[data-role='footer']").html("Η ενημέρωση απέτυχε");
+        $("div[data-role='footer']").find("h1").html("Η ενημέρωση απέτυχε");
     },
     prepareFilms: function(films, $ul) {
         logger.log("views.loadFilms: started");
@@ -299,10 +338,54 @@ var views = {
         views.prepareFilms(data.allFilms, $("#all ul"));
         views.prepareCategories(data.allFilms, $("#categories ul"));
     },
+    // Load the data for a specific film, based on
+    // the URL passed in. Generate markup for the items in the
+    // film, inject it into an embedded page, and then make
+    // that page the current active page.
+    showFilm: function showFilm(urlObj, options) {
+        logger.log("views.showFilm " + urlObj.href);
+        // Get the id of the film from the URL.
+        var id = urlObj.hash.replace(/.*id=/, "");
+        // Get the pageId from the URL.
+        var pageSelector = urlObj.hash.replace(/\?.*$/, "");
+
+        var film = data.film(id);
+        if (film) {
+            // Get the page we are going to dump our content into.
+            var $page = $(pageSelector);
+            // Get the header for the page.
+            var $header = $page.children( ":jqmData(role=header)" );
+            // Get the content area element for the page.
+            var $content = $page.children( ":jqmData(role=content)" );
+
+            // Replace.
+            $header.find("h1").html(film.title);
+            $content.find("#film-orig-title").html(film.origTitle);
+            $content.find("#film-year").html(film.year);
+            $content.find("#film-category").html(film.category);
+    
+            // Pages are lazily enhanced. We call page() on the page
+            // element to make sure it is always enhanced before we
+            // attempt to enhance the listview markup we just injected.
+            // Subsequent calls to page() are ignored since a page/widget
+            // can only be enhanced once.
+            $page.page();
+    
+            // We don't want the data-url of the page we just modified
+            // to be the url that shows up in the browser's location field,
+            // so set the dataUrl option to the URL for the category
+            // we just loaded.
+            options.dataUrl = urlObj.href;
+    
+            // Now call changePage() and tell it to switch to
+            // the page we just modified.
+            $.mobile.changePage($page, options);
+        }
+    },
     bindEvents: function() {
         $.subscribe(events.LOADING_COMPLETED, views.prepareAll);
         $.subscribe(events.UPDATE_INFO_LOADED, function(e, updateInfo) {
-            $("div[data-role='footer']").html("Τελευταία ενημέρωση:" + new Date(updateInfo.date).toDateString());
+            $("div[data-role='footer']").find("h1").html("Τελευταία ενημέρωση:" + new Date(updateInfo.date).toDateString());
         });
         $.subscribe(events.NEW_ARRIVALS_LOADED, function(e, films) {
             views.prepareFilms(films, $("#new ul"));
@@ -312,6 +395,38 @@ var views = {
         });
         $.subscribe(events.ALL_FILMS_LOADED, function(e, films) {
             views.prepareCategories(films, $("#categories ul"));
+        });
+        
+        // Listen for any attempts to call changePage().
+        $(document).bind( "pagebeforechange", function(e, d) {
+        
+            // We only want to handle changePage() calls where the caller is
+            // asking us to load a page by URL.
+            if (typeof d.toPage === "string") {
+        
+                // We are being asked to load a page by URL, but we only
+                // want to handle URLs that request the data for a specific
+                // category.
+                var u = $.mobile.path.parseUrl(d.toPage),
+                    reFilmInfo = /^#film-info/,
+                    reUpdate = /^#update/;
+        
+                if (u.hash.search(reFilmInfo) !== -1) {
+        
+                    // We're being asked to display the items for a specific film.
+                    // Call our internal method that builds the content for the film
+                    // on the fly based on our in-memory film data structure.
+                    views.showFilm(u, d.options);
+        
+                    // Make sure to tell changePage() we've handled this call so it doesn't
+                    // have to do anything.
+                    e.preventDefault();
+                }
+                else if (u.hash.search(reUpdate) !== -1) {
+                    app.update(true);
+                    e.preventDefault();
+                }
+            }
         });
     }
 };
@@ -368,10 +483,19 @@ var app = {
     receivedEvent: function(id) {
         logger.log('Received Event: ' + id);
     },    
-    update: function() {
+    update: function(all) {
         logger.log("app.update");
         
         var rootURL = appFS.root.toURL();
+        
+        if (all) {
+            data.download(app.URL_UPDATE_INFO, 
+                      rootURL + app.FILE_UPDATE_INFO, 
+                      function(filename) {
+                        $.publish(events.UPDATE_INFO_DOWNLOADED, [filename]);
+                      },
+                      views.downloadError);
+        }
         
         data.download(app.URL_NEW_ARRIVALS, 
                       rootURL + app.FILE_NEW_ARRIVALS, 
