@@ -28,7 +28,7 @@
                     "/*": [
                         {
                             "xml": "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\" />",
-                            "count": 4
+                            "count": 2
                         }
                     ]
                 }
@@ -36,17 +36,17 @@
         }
     },
     "installed_plugins": {
-        "org.apache.cordova.console": {
-            "PACKAGE_NAME": "net.ronto.showtimes.athens"
+        "cordova-plugin-console": {
+            "PACKAGE_NAME": "co.ronto.showtimes.athens"
         },
-        "org.apache.cordova.device": {
-            "PACKAGE_NAME": "net.ronto.showtimes.athens"
+        "cordova-plugin-device": {
+            "PACKAGE_NAME": "co.ronto.showtimes.athens"
         },
-        "org.apache.cordova.file": {
-            "PACKAGE_NAME": "net.ronto.showtimes.athens"
+        "cordova-plugin-file": {
+            "PACKAGE_NAME": "co.ronto.showtimes.athens"
         },
-        "org.apache.cordova.file-transfer": {
-            "PACKAGE_NAME": "net.ronto.showtimes.athens"
+        "cordova-plugin-file-transfer": {
+            "PACKAGE_NAME": "co.ronto.showtimes.athens"
         }
     },
     "dependent_plugins": {}
