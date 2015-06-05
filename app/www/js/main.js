@@ -3,13 +3,17 @@
 /*globals FileError:true, LocalFileSystem:true, FileReader:true, FileTransfer:true */
 "use strict";
 
+/*******************************************************************************/
+/**************** Logger *******************************************************/
 var logger = {
     appName: "[Showtimes]",
     log: function(msg) {
         console.log(this.prepareLogEntry(msg));
+        //steroids.logger.log(this.prepareLogEntry(msg));
     },
     error: function(msg) {
         console.log(this.prepareLogEntry(msg, "Error"));
+        //steroids.logger.log(this.prepareLogEntry(msg, "Error"));
     },
     prepareLogEntry: function(entry, category) {    
         var header = this.appName + " ";
@@ -20,54 +24,44 @@ var logger = {
         return entry;
     }
 };
-
-var events = {
-    // General events.
-    FILE_SYSTEM_READY: "fs_ok",
-    DOWNLOADING_COMPLETED: "down_ok",
-    LOADING_COMPLETED: "load_ok",
-    STALE_DATA: "stale",
-    FRESH_DATA: "fresh",
-    // Events for specific files.
-    UPDATE_INFO_DOWNLOADED: "update_d",
-    UPDATE_INFO_LOADED: "update_l",
-    NEW_ARRIVALS_DOWNLOADED: "new_d",
-    NEW_ARRIVALS_LOADED: "new_l",
-    ALL_FILMS_DOWNLOADED: "all_films_d",
-    ALL_FILMS_LOADED: "all_films_l",
-    SHOWTIMES_DOWNLOADED: "show_d",
-    SHOWTIMES_LOADED: "show_l"
-};
-
+/*******************************************************************************/
+/**************** FileSystem ***************************************************/
 var appFS= {
     SIZE: 5 * 1024 * 1024,
     _fs: null,
     root: null,
-    defaultErrorHandler: function(e) {
-        var msg = '';
+    // Add a description to the error object.This description
+    // is for the user.
+    enrichError: function(e) {
+        var whatHappened = "";
     
         switch (e.code) {
         case FileError.QUOTA_EXCEEDED_ERR:
-            msg = 'QUOTA_EXCEEDED_ERR';
+            whatHappened = "QUOTA_EXCEEDED_ERR";
             break;
         case FileError.NOT_FOUND_ERR:
-            msg = 'NOT_FOUND_ERR';
+            whatHappened = "NOT_FOUND_ERR";
             break;
         case FileError.SECURITY_ERR:
-            msg = 'SECURITY_ERR';
+            whatHappened = "SECURITY_ERR";
             break;
         case FileError.INVALID_MODIFICATION_ERR:
-            msg = 'INVALID_MODIFICATION_ERR';
+            whatHappened = "INVALID_MODIFICATION_ERR";
             break;
         case FileError.INVALID_STATE_ERR:
-            msg = 'INVALID_STATE_ERR';
+            whatHappened = "INVALID_STATE_ERR";
             break;
         default:
-            msg = 'Unknown Error';
+            whatHappened = "Unknown Error";
             break;
         }
 
-        logger.error(msg);
+        e.whatHappened = whatHappened;
+    },
+    // Simple FS error handler that adds a description of what happened
+    // and logs the error.
+    defaultErrorHandler: function(e) {
+        appFS.enrichError(e);
         logger.error(JSON.stringify(e));
     },
     // Wraps an error handler function so that the default hanlder is also called.
@@ -119,11 +113,90 @@ var appFS= {
     }
 };
 
+/*******************************************************************************/
+/**************** Models/Collections *******************************************/
+
+var Film = Backbone.Model.extend({ 
+});
+
+var FilmCollection = Backbone.Collection.extend({
+    model: Film,
+    comparator: 'title'
+});
+
+var FilmCollectionView = Backbone.View.extend({    
+    filmTemplate: _.template($('#film-collection-template').html()),
+    initialize: function(options) {
+        logger.log('Initializing FilmListView');
+        
+        this.main = this.$('ul');
+        this.listenTo(this.collection, 'all', this.render);
+    },
+    render: function() { 
+        logger.log('Rendering FilmListView');
+        
+        var items = [];
+        var filmTemplate = this.filmTemplate;
+        this.collection.forEach(function(f) {
+            items.push(filmTemplate({ film: f.toJSON() }).trim());
+        });
+        // Add new elements.
+        this.main.html(items.join(""));
+        
+        return this;
+    }
+});
+
+/*******************************************************************************/
+/**************** Router *******************************************************/
+
+var AppRouter = Backbone.Router.extend({
+    routes: {        
+        // #film-info/1234
+        "film-info/:id":    "film_info"
+        //"film-info/:id":    "views.showFilm"
+    },
+    film_info: function(id) {
+        logger.log('Film info ' + id);
+    }
+});
+
+/*******************************************************************************/
+/**************** Events *******************************************************/
+
+var events = {
+    // General events.
+    FILE_SYSTEM_READY: "fs_ok",
+    DOWNLOADING_COMPLETED: "down_ok",
+    LOADING_COMPLETED: "load_ok",
+    STALE_DATA: "stale",
+    FRESH_DATA: "fresh",
+    // Events for specific files.
+    UPDATE_INFO_AVAILABLE: "update_d",
+    UPDATE_INFO_LOADED: "update_l",
+    NEW_ARRIVALS_AVAILABLE: "new_d",
+    NEW_ARRIVALS_LOADED: "new_l",
+    ALL_FILMS_AVAILABLE: "all_films_d",
+    ALL_FILMS_LOADED: "all_films_l",
+    SHOWTIMES_AVAILABLE: "show_d",
+    SHOWTIMES_LOADED: "show_l"
+};
+
+/*******************************************************************************/
+/**************** Data *********************************************************/
+
 var data = {
     updateInfo: null,
-    newFilms: [],
-    allFilms: [],
-    showtimes: [],
+    newFilmsRaw: [],
+    allFilmsRaw: [],
+    showtimesRaw: [],
+    newFilms: null,
+    allFilms: null,
+    showtimes: null,
+    init: function() {
+        data.newFilms = new FilmCollection();
+        data.allFilms = new FilmCollection();
+    },
     // Find a film by id.
     film: function(id) {
         logger.log("data.film " + id);
@@ -199,9 +272,9 @@ var data = {
     exchange: function() {
         logger.log("data.exchange");
         data.updateInfo = data.tmp.updateInfo;
-        data.newFilms = data.tmp.newFilms;
-        data.allFilms = data.tmp.allFilms;
-        data.allShowtimes = data.tmp.showtimes;
+        data.newFilmsRaw = data.tmp.newFilms;
+        data.allFilmsRaw = data.tmp.allFilms;
+        data.allShowtimesRaw = data.tmp.showtimes;
     },
     // Returns true if the data are more than 7 days old.
     needsUpdate: function(lastUpdateInfo) {
@@ -251,7 +324,7 @@ var data = {
         
         $.subscribe(events.DOWNLOADING_COMPLETED, data.exchange);
         
-        $.subscribe(events.UPDATE_INFO_DOWNLOADED, function(e, filename, error) {
+        $.subscribe(events.UPDATE_INFO_AVAILABLE, function(e, filename, error) {
             // This is a hack, loadFromFile can only load to an array.
             var dataContainer = [];
             data.loadFromFile(filename, dataContainer, function() {
@@ -270,86 +343,97 @@ var data = {
                 }
             }, error);
         });
-        $.subscribe(events.NEW_ARRIVALS_DOWNLOADED, function(e, filename) {
-            data.loadFromFile(filename, data.newFilms, function() {
-                $.publish(events.NEW_ARRIVALS_LOADED, [data.newFilms]);                        
+        $.subscribe(events.NEW_ARRIVALS_AVAILABLE, function(e, filename) {
+            data.loadFromFile(filename, data.newFilmsRaw, function() {
+                $.publish(events.NEW_ARRIVALS_LOADED, [data.newFilmsRaw]);                        
             });
         });
-        $.subscribe(events.ALL_FILMS_DOWNLOADED, function(e, filename) {
-            data.loadFromFile(filename, data.allFilms, function() {
-                $.publish(events.ALL_FILMS_LOADED, [data.allFilms]);
+        $.subscribe(events.ALL_FILMS_AVAILABLE, function(e, filename) {
+            data.loadFromFile(filename, data.allFilmsRaw, function() {
+                $.publish(events.ALL_FILMS_LOADED, [data.allFilmsRaw]);
             });
         });
-        $.subscribe(events.SHOWTIMES_DOWNLOADED, function(e, filename) {
-            data.loadFromFile(filename, data.showtimes, function() {
-                $.publish(events.SHOWTIMES_LOADED, [data.showtimes]);
+        $.subscribe(events.SHOWTIMES_AVAILABLE, function(e, filename) {
+            data.loadFromFile(filename, data.showtimesRaw, function() {
+                $.publish(events.SHOWTIMES_LOADED, [data.showtimesRaw]);
             });
         });
     }
 };
 
+/*******************************************************************************/
+/**************** Views ********************************************************/
+
 var views = {
-    renderFilm: function(film) {
-        return "<li><a href=\"#film-info?id=" + film.id + "\">" + film.title + "</a></li>";
+    newFilmsView: null,
+    allFilmsView: null,
+    init: function() {
+        views.newFilmsView = new FilmCollectionView({ el: $("#new"), collection: data.newFilms });
+        views.allFilmsView = new FilmCollectionView({ el: $("#all"), collection: data.allFilms });
     },
-    renderSimple: function(title) {
-        return "<li><a href=\"#\">" + title + "</a></li>";
-    },
+//    renderSimple: function(title) {
+//        return "<li><a href=\"#\">" + title + "</a></li>";
+//    },
     downloadError: function() {
         $("div[data-role='footer']").find("h1").html("Η ενημέρωση απέτυχε");
     },
-    prepareFilms: function(films, $ul) {
-        logger.log("views.loadFilms: started");
-        
-        // Remove all elements from the list.
-        $ul.empty();
-        
-        var items = [];
-        _.chain(films).sortBy("title").forEach(function(f) {
-            items.push(views.renderFilm(f));
-        });
-        // Add new elements.
-        $ul.append(items.join(""));
-        
-        logger.log("Loaded " + items.length + " films.");
-    },
-    prepareCategories: function(films, $ul) {
-        logger.log("views.loadCategories: started");
-        
-        // Remove all elements from the list.
-        $ul.empty();
-        
-        var categories = _.chain(films).map(function(o) {
-            return o.category;
-        }).uniq().sort().value();
-        
-        var items = [];
-        _.forEach(categories, function(c) {
-            items.push(views.renderSimple(c));
-        });
-        
-        // Add new elements.
-        $ul.append(items.join(""));
-        
-        logger.log("Loaded " + items.length + " categories.");
-    },
-    prepareAll: function() {
-        views.prepareFilms(data.newFilms, $("#new ul"));
-        views.prepareFilms(data.allFilms, $("#all ul"));
-        views.prepareCategories(data.allFilms, $("#categories ul"));
+//    prepareFilms: function(films, $ul) {
+//        logger.log("views.loadFilms: started");
+//        
+//        // Remove all elements from the list.
+//        $ul.empty();
+//        
+//        var items = [];
+//        _.chain(films).sortBy("title").forEach(function(f) {
+//            items.push(views.renderFilm(f));
+//        });
+//        // Add new elements.
+//        $ul.append(items.join(""));
+//        
+//        logger.log("Loaded " + items.length + " films.");
+//    },
+//    prepareCategories: function(films, $ul) {
+//        logger.log("views.loadCategories: started");
+//        
+//        // Remove all elements from the list.
+//        $ul.empty();
+//        
+//        var categories = _.chain(films).map(function(o) {
+//            return o.category;
+//        }).uniq().sort().value();
+//        
+//        var items = [];
+//        _.forEach(categories, function(c) {
+//            items.push(views.renderSimple(c));
+//        });
+//        
+//        // Add new elements.
+//        $ul.append(items.join(""));
+//        
+//        logger.log("Loaded " + items.length + " categories.");
+//    },
+//    prepareAll: function() {
+//        views.prepareFilms(data.newFilms, $("#new ul"));
+//        views.prepareFilms(data.allFilms, $("#all ul"));
+//        views.prepareCategories(data.allFilms, $("#categories ul"));
+//    },
+    re: {
+        beforeFilmId: /.*id=/,
+        afterPageSelector: /\?.*$/
     },
     // Load the data for a specific film, based on
     // the URL passed in. Generate markup for the items in the
     // film, inject it into an embedded page, and then make
     // that page the current active page.
-    showFilm: function showFilm(urlObj, options) {
+    showFilm: function(urlObj, options) {
         logger.log("views.showFilm " + urlObj.href);
         // Get the id of the film from the URL.
-        var id = urlObj.hash.replace(/.*id=/, "");
+        var id = urlObj.hash.replace(views.re.beforeFilmId, "");
         // Get the pageId from the URL.
-        var pageSelector = urlObj.hash.replace(/\?.*$/, "");
+        var pageSelector = urlObj.hash.replace(views.re.afterPageSelector, "");
 
-        var film = data.film(id);
+        //var film = data.film(id);
+        var film = app.allFilms.findWhere({ id: id });
         if (film) {
             // Get the page we are going to dump our content into.
             var $page = $(pageSelector);
@@ -383,18 +467,20 @@ var views = {
         }
     },
     bindEvents: function() {
-        $.subscribe(events.LOADING_COMPLETED, views.prepareAll);
+        //$.subscribe(events.LOADING_COMPLETED, views.prepareAll);
         $.subscribe(events.UPDATE_INFO_LOADED, function(e, updateInfo) {
             $("div[data-role='footer']").find("h1").html("Τελευταία ενημέρωση:" + new Date(updateInfo.date).toDateString());
         });
         $.subscribe(events.NEW_ARRIVALS_LOADED, function(e, films) {
-            views.prepareFilms(films, $("#new ul"));
+            data.newFilms.reset(films);       
+            //views.prepareFilms(films, $("#new ul"));
         });
         $.subscribe(events.ALL_FILMS_LOADED, function(e, films) {
-            views.prepareFilms(films, $("#all ul"));
+            data.allFilms.reset(films);
+            //views.prepareFilms(films, $("#all ul"));
         });
         $.subscribe(events.ALL_FILMS_LOADED, function(e, films) {
-            views.prepareCategories(films, $("#categories ul"));
+            //views.prepareCategories(films, $("#categories ul"));
         });
         
         // Listen for any attempts to call changePage().
@@ -431,11 +517,33 @@ var views = {
     }
 };
 
+/*var AppView = Backbone.View.extend({
+    el: $("#showtimes-app"),
+    filmCounterTemplate: _.template($('#film-counter-template').html()),
+    initialize: function() {
+        logger.log('Initializing app');
+        this.main = $('#main');
+
+        this.listenTo(films, 'all', this.render);
+    },
+    render: function() { 
+        logger.log('Rendering app');
+        this.main.html(this.filmCounterTemplate({count: films.length}));
+
+        return this;
+    }
+});
+
+var app = new AppView();*/
+
+/*******************************************************************************/
+/**************** Application **************************************************/
+
 var app = {
-    URL_NEW_ARRIVALS: "https://raw.github.com/prontog/showtimes.athens/master/scrape/samples/new_arrivals.json",
-    URL_ALL_FILMS: "https://raw.github.com/prontog/showtimes.athens/master/scrape/samples/all_films.json",
-    URL_SHOWTIMES: "https://raw.github.com/prontog/showtimes.athens/master/scrape/samples/showtimes.json",
-    URL_UPDATE_INFO: "https://raw.github.com/prontog/showtimes.athens/master/scrape/samples/update_info.json",
+    URL_NEW_ARRIVALS: "http://showtimes.ronto.net/data/new_arrivals.json",
+    URL_ALL_FILMS: "http://showtimes.ronto.net/data/all_films.json",
+    URL_SHOWTIMES: "http://showtimes.ronto.net/data/showtimes.json",
+    URL_UPDATE_INFO: "http://showtimes.ronto.net/data/update_info.json",
     FILE_NEW_ARRIVALS: "new_arrivals.json",
     FILE_ALL_FILMS: "all_films.json",
     FILE_SHOWTIMES: "showtimes.json",
@@ -443,13 +551,63 @@ var app = {
     
     initialize: function() {
         logger.log("app.initialize");
+                        
+        //this.router = new AppRouter();
+        //Backbone.history.start();
+        //this.router.on('route:film-info'
+        
+        data.init();
+        views.init();
+        
         this.bindEvents();
     },
     // Loads everything from file system.
     load: function() {
-        $.publish(events.NEW_ARRIVALS_DOWNLOADED, [app.FILE_NEW_ARRIVALS]);
-        $.publish(events.ALL_FILMS_DOWNLOADED, [app.FILE_ALL_FILMS]);
-        $.publish(events.SHOWTIMES_DOWNLOADED, [app.FILE_SHOWTIMES]);
+        $.publish(events.NEW_ARRIVALS_AVAILABLE, [app.FILE_NEW_ARRIVALS]);
+        $.publish(events.ALL_FILMS_AVAILABLE, [app.FILE_ALL_FILMS]);
+        $.publish(events.SHOWTIMES_AVAILABLE, [app.FILE_SHOWTIMES]);
+    },   
+    update: function(all) {
+        logger.log("app.update");
+        
+        var rootURL = appFS.root.toURL();
+        
+        if (all) {
+            data.download(app.URL_UPDATE_INFO, 
+                      rootURL + app.FILE_UPDATE_INFO, 
+                      function(filename) {
+                        $.publish(events.UPDATE_INFO_AVAILABLE, [filename]);
+                      },
+                      views.downloadError);
+        }
+        
+        data.download(app.URL_NEW_ARRIVALS, 
+                      rootURL + app.FILE_NEW_ARRIVALS, 
+                      function(filename) {
+                        $.publish(events.NEW_ARRIVALS_AVAILABLE, [filename]);
+                      },
+                      views.downloadError);
+        
+        data.download(app.URL_ALL_FILMS, 
+                      rootURL + app.FILE_ALL_FILMS, 
+                      function(filename) {
+                        $.publish(events.ALL_FILMS_AVAILABLE, [filename]);
+                      },
+                      views.downloadError);
+        
+        data.download(app.URL_SHOWTIMES,
+                      rootURL + app.FILE_SHOWTIMES,
+                      function(filename) {
+                        $.publish(events.SHOWTIMES_AVAILABLE, [filename]);
+                      },
+                      views.downloadError);
+    },
+    loadRawData: function() {                               
+        var rawFilms = [{"id":"10042292","url":"http://www.athinorama.gr/cinema/movie.aspx?id=10042292","image":"/images/blank.gif","title":"Η Έξοδος: Θεοί και Βασιλιάδες","origTitle":"Exodus: Gods and Kings","category":"Περιπέτεια","year":"2014","filmType":"Έγχρ.","duration":"Διάρκεια: 150'","rated":"-","credits":"Αμερικανική ταινία, σκηνοθεσία Ρίντλεϊ Σκοτ με τους: Κρίστιαν Μπέιλ, Τζόελ Έντγκερτον, Μπεν Κίνγκσλεϊ, Τζον Τορτούρο","summary":"Όταν αποκαλυφθεί η πραγματική καταγωγή του, ο Μωυσής θα ηγηθεί της προσπάθειας των σκλαβωμένων Ισραηλιτών να αποτινάξουν τον αιγυπτιακό ζυγό και να φτάσουν στη Γη της Επαγγελίας.","review":"Με σενάριο που θυμίζει απλοϊκό, γραμμικό «ξεφύλλισμα» της γνωστής βιβλικής ιστορίας και μια ακαδημαϊκή σκηνοθετική προσέγγιση που δεν πείθει –ακόμη και σε επίπεδο φαντασμαγορίας–, το θρησκευτικό έπος δεν καταφέρνει να βρει το δρόμο προς τη… Γη της Κινηματογραφικής Πρωτοτυπίας.","imdb":"http://www.exodusgodsandkings.com/#home","theatersUrl":"movieplaces.aspx?id=10042292","theaters":""},
+        {"id":"10042286","url":"http://www.athinorama.gr/cinema/movie.aspx?id=10042286","image":"/images/blank.gif","title":"Ο Επιφανής Άγνωστος","origTitle":"Un Illustre Inconnu","category":"Θρίλερ","year":"2014","filmType":"Έγχρ.","duration":"Διάρκεια: 118'","rated":"-","credits":"Γαλλική ταινία, σκηνοθεσία Ματιέ Ντελαπόρτ με τους: Ματιέ Κασοβίτς, Mαρί-Ζοζέ Κροζέ, Ερίκ Καραβακά","summary":"Ο Σεμπαστιάν Νικολά είναι ένας άχρωμος και άοσμος 45άρης. Παρατηρεί τους ανθρώπους, μαθαίνει να τους μιμείται, ενώ συχνά οικειοποιείται μυστικά την ταυτότητά τους. Μέχρι που συναντά τον διάσημο κι εκκεντρικό μουσικό Ανρί ντε Μοντάλτ.","review":"Ρεσιτάλ αλλαγής ρόλων και προσωπείων από τον Ματιέ Κασοβίτς, σε ένα ατμοσφαιρικό, αλλά εύκολων τελικών λύσεων δραματικό θρίλερ. Από τον σεναριογράφο της αστυνομικής περιπέτειας «22 Σφαίρες» και σκηνοθέτη της κομεντί «Για Όλα Φταίει τ’ Όνομά σου».","imdb":"http://www.imdb.com/title/tt3161960/","theatersUrl":"movieplaces.aspx?id=10042286","theaters":""}];
+
+        data.newFilms.reset(rawFilms);
+        data.allFilms.reset(rawFilms);
     },
     // Bind Event Listeners
     //
@@ -463,11 +621,11 @@ var app = {
             // Notify that the update-info file is available. If the loading (subscribed 
             // to this events) fails, the file re-downloaded one more time. This is for the
             // case where the update-info file does not exist on the local file system.
-            $.publish(events.UPDATE_INFO_DOWNLOADED, [app.FILE_UPDATE_INFO, function() {
+            $.publish(events.UPDATE_INFO_AVAILABLE, [app.FILE_UPDATE_INFO, function() {
                 data.download(app.URL_UPDATE_INFO, 
                       appFS.root.toURL() + app.FILE_UPDATE_INFO, 
                       function(filename) {
-                        $.publish(events.UPDATE_INFO_DOWNLOADED, [filename]);
+                        $.publish(events.UPDATE_INFO_AVAILABLE, [filename]);
                       },
                       views.downloadError);
             }]);
@@ -482,41 +640,6 @@ var app = {
     // Update DOM on a Received Event
     receivedEvent: function(id) {
         logger.log('Received Event: ' + id);
-    },    
-    update: function(all) {
-        logger.log("app.update");
-        
-        var rootURL = appFS.root.toURL();
-        
-        if (all) {
-            data.download(app.URL_UPDATE_INFO, 
-                      rootURL + app.FILE_UPDATE_INFO, 
-                      function(filename) {
-                        $.publish(events.UPDATE_INFO_DOWNLOADED, [filename]);
-                      },
-                      views.downloadError);
-        }
-        
-        data.download(app.URL_NEW_ARRIVALS, 
-                      rootURL + app.FILE_NEW_ARRIVALS, 
-                      function(filename) {
-                        $.publish(events.NEW_ARRIVALS_DOWNLOADED, [filename]);
-                      },
-                      views.downloadError);
-        
-        data.download(app.URL_ALL_FILMS, 
-                      rootURL + app.FILE_ALL_FILMS, 
-                      function(filename) {
-                        $.publish(events.ALL_FILMS_DOWNLOADED, [filename]);
-                      },
-                      views.downloadError);
-        
-        data.download(app.URL_SHOWTIMES,
-                      rootURL + app.FILE_SHOWTIMES,
-                      function(filename) {
-                        $.publish(events.SHOWTIMES_DOWNLOADED, [filename]);
-                      },
-                      views.downloadError);
     },
     // deviceready Event Handler
     //
