@@ -27,7 +27,7 @@ scrape(url, function(ctx) {
     ctx.check($films, "$films");
     
     $films.each(function() {     
-        var $a = $(this).children("a").first();
+        var $a = $(this).parent();
         ctx.check($a, "$a");
         // Url of film.
         var filmUrl = $a.attr("href");                    

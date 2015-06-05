@@ -27,7 +27,7 @@ if (args.length !== 3) {
 scrape(url, function(ctx) {
     var id = ctx.otherArgs[0];
     
-    var $areas = $("div.piatsaname");                                
+    var $areas = $(".piatsaname");                                
     ctx.check($areas, "$areas");
     
     $areas.each(function() {
@@ -35,33 +35,36 @@ scrape(url, function(ctx) {
         // The area the cinema is located at.
         var area = $piatsaName.children("a").text().trim();
         
-        var $next = $piatsaName.next();
-        ctx.check($next, "$next");
-        while ($next[0] && $next[0].tagName === "TABLE")
-        {
-            var $table = $next;
+        var $table = $piatsaName.next("table");
+        ctx.check($table, "$table");
+        while ($table[0] && $table[0].tagName === "TABLE")
+        {            
+            var $tr_first = $table.find("tr").first();
             
-            var $placename = $table.find("h2 a");
+            var $placename = $tr_first.find("a h3");
+            ctx.check($placename, "$placename");
             var cinemaName = $placename.text().trim();
-            var cinemaUrl = $placename.attr("href");
+            var cinemaUrl = $placename.parent().attr("href");
             
-            var $tr_placename = $placename.parent().parent().parent().next();
-            var $tr_p = $tr_placename.find("p");
-    
-            var $p_address = $tr_p.first();
+            var $p_address = $placename.parent().next("p");
+            ctx.check($p_address, "$p_address");
             var address = $p_address.text().trim();
             var map = $p_address.find("a").attr("href");
             
             var $p_phone = $p_address.next("p");
+            ctx.check($p_phone, "$p_phone");
             var phone = $p_phone.text();
             
             var $p_tech_info = $p_phone.next("p");
+            ctx.check($p_tech_info, "$p_tech_info");
             var tech_info = $p_tech_info[0] ? $p_tech_info.text() : "";
+                        
+            var $p_price = $p_tech_info.next("p");
+            ctx.check($p_price, "$p_price");
+            var price = $p_price.next("p").text().trim();
             
-            var $tr_price = $tr_placename.next("tr");
-            var price = $tr_price.find("p").text().trim();
-            
-            var rooms = $tr_price.next("tr").text().trim();
+            var $tr_second = $tr_first.next("tr");
+            var rooms = $tr_second.text().trim();
             // ToDo: Probably should split the rooms into an array.
             
             var showtime = {
@@ -79,7 +82,7 @@ scrape(url, function(ctx) {
             
             console.log(JSON.stringify(showtime));                        
             
-            $next = $next.next();
+            $table = $table.next();
         } // while table
-    }); // each div.piatsaname                                                        
+    }); // each .piatsaname                                                        
 }, filmId); // scrape

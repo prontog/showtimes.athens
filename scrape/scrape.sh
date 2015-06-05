@@ -90,7 +90,7 @@ echo scraping URLs...
 phantomjs scrape_all_films.js $URL_ALL_FILMS > $FN_ALL_FILMS_URLS
 scrape_films $FN_ALL_FILMS_URLS $FN_ALL_FILMS
 
-echo +Images and Shotimes
+echo +Images and Showtimes
 phantomjs map_film_info.js $FN_ALL_FILMS > $FN_FILM_INFO
 
 while read FILM_ID FILM_URL SHOWTIMES_URL
@@ -99,7 +99,7 @@ do
     FILM_URL=http://www.athinorama.gr/lmnts/events/cinema/${FILM_ID}/Poster.jpg
     echo downloading $FILM_URL
     curl -L $FILM_URL > ${DIR_IMAGES}/${FILM_ID}.jpg
-    echo scraping ${URL_CINEMA}${SHOWTIMES_URL}
+    echo scraping showtimes ${URL_CINEMA}${SHOWTIMES_URL}
     phantomjs scrape_film_showtimes.js $FILM_ID ${URL_CINEMA}${SHOWTIMES_URL} >> $FN_SHOWTIMES    
 done < $FN_FILM_INFO
 

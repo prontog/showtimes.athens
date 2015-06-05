@@ -22,26 +22,27 @@ if (args.length !== 2) {
     url = args[1];
 }
 
-scrape(url, function(ctx) {
-    var placeContainerSelector = "div.place-container";
-    var $divContainer = $(placeContainerSelector).first();
-    ctx.check($divContainer, "$divContainer");
+scrape(url, function(ctx) {    
+    var $placeContainer = $(".place-container").first();
+    ctx.check($placeContainer, "$placeContainer");
     
     // Page of film
     var url = ctx.url;
     // Image
-    var image = $divContainer.children("img").first().attr("src");
+    var $img = $placeContainer.find("img").first();
+    ctx.check($img, "$img");
+    var image = $img.attr("src");
                         
-    var $h1_titles = $divContainer.children("h1").first();
+    var $h1_titles = $placeContainer.find("h1").first();
     ctx.check($h1_titles, "$h1_titles");
     // Original title (EN)
     var origTitle = $h1_titles.children("span").first().text().trim();
     // Title (GRE)
     var title = $h1_titles.text().replace(origTitle, "").trim();
     // stars. The half stars for the film can be found in the last digit.
-    var stars = $divContainer.children("div.stars15h")[0].className;
+    //var stars = $placeContainer.children("div.stars15h")[0].className;
     // ToCheck: Do I need this?
-    var $divPlaceData = $divContainer.children("div.placedata").first();
+    var $divPlaceData = $placeContainer.find("div.placedata").first();
     ctx.check($divPlaceData, "$divPlaceData");
     var $pSimpleData = $divPlaceData.children("p.simpledata").first();
     ctx.check($pSimpleData, "$pSimpleData");
@@ -56,9 +57,9 @@ scrape(url, function(ctx) {
     var duration = descriptionFields[2].replace(rated, "").trim();
     var credits = $pSimpleData.next().text().trim();
     var summary = $pSimpleData.next().next().text().trim(); 
-    var review = $divContainer.find(placeContainerSelector).children("p").text().trim();
-    var imdb = $divContainer.find("ul.tainialink").find("li a").first().attr("href");
-    var theatersUrl = $divContainer.find("a.big-button").first().attr("href");
+    var review = $placeContainer.find("place-container").children("p").text().trim();
+    var imdb = $placeContainer.find("ul.tainialink").find("li a").first().attr("href");
+    var theatersUrl = $placeContainer.find("a.big-button").first().attr("href");
     var id = theatersUrl.match(/[\d]+$/)[0];
     var theaters = "";
     
