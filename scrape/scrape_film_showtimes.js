@@ -60,8 +60,14 @@ scrape(url, function(ctx) {
             var tech_info = $p_tech_info[0] ? $p_tech_info.text() : "";
                         
             var $p_price = $p_tech_info.next("p");
-            ctx.check($p_price, "$p_price");
-            var price = $p_price.next("p").text().trim();
+            
+            if ($p_price.length) {
+                var price = $p_price.text().trim();
+            } 
+            else {
+                var price = tech_info;
+                tech_info = "";
+            }
             
             var $tr_second = $tr_first.next("tr");
             var rooms = $tr_second.text().trim();
