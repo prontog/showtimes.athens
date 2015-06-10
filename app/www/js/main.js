@@ -1,6 +1,6 @@
 /*jslint nomen:true, vars:true, devel:true, browser:true, white:true */
 /*globals _:true, $:true */
-/*globals FileError:true, LocalFileSystem:true, FileReader:true, FileTransfer:true */
+/*globals FileError:true, LocalFileSystem:true, FileReader:true, FileTransfer:true, Backbone:true */
 "use strict";
 
 /*******************************************************************************/
@@ -24,6 +24,27 @@ var logger = {
         return entry;
     }
 };
+/*******************************************************************************/
+/**************** Events *******************************************************/
+
+var events = {
+    // General events.
+    FILE_SYSTEM_READY: "fs_ok",
+    DOWNLOADING_COMPLETED: "down_ok",
+    LOADING_COMPLETED: "load_ok",
+    STALE_DATA: "stale",
+    FRESH_DATA: "fresh",
+    // Events for specific files.
+    UPDATE_INFO_AVAILABLE: "update_d",
+    UPDATE_INFO_LOADED: "update_l",
+    NEW_ARRIVALS_AVAILABLE: "new_d",
+    NEW_ARRIVALS_LOADED: "new_l",
+    ALL_FILMS_AVAILABLE: "all_films_d",
+    ALL_FILMS_LOADED: "all_films_l",
+    SHOWTIMES_AVAILABLE: "show_d",
+    SHOWTIMES_LOADED: "show_l"
+};
+
 /*******************************************************************************/
 /**************** FileSystem ***************************************************/
 var appFS= {
@@ -127,13 +148,13 @@ var FilmCollection = Backbone.Collection.extend({
 var FilmCollectionView = Backbone.View.extend({    
     filmTemplate: _.template($('#film-collection-template').html()),
     initialize: function(options) {
-        logger.log('Initializing FilmListView');
+        logger.log('Initializing FilmCollectionView');
         
         this.main = this.$('ul');
         this.listenTo(this.collection, 'all', this.render);
     },
     render: function() { 
-        logger.log('Rendering FilmListView');
+        logger.log('Rendering FilmCollectionView');
         
         var items = [];
         var filmTemplate = this.filmTemplate;
@@ -144,6 +165,44 @@ var FilmCollectionView = Backbone.View.extend({
         this.main.html(items.join(""));
         
         return this;
+    }
+});
+
+var FilmView = Backbone.View.extend({
+    filmTemplate: _.template($('#film-template').html()),
+    initialize: function(options) {
+        this.main = this.$('.content');
+    },
+    render: function() {
+        logger.log('Rendering FilmView');
+        
+    }
+});
+
+var Category = Backbone.Model.extend({ 
+});
+
+var CategoryCollection = Backbone.Collection.extend({
+    model: Category,
+    comparator: 'name'
+});
+
+var CategoryCollectionView = Backbone.View.extend({
+    categoryTemplate: _.template($('#category-template').html()),
+    initialize: function(options) {
+        this.main = this.$('ul');
+        this.listenTo(this.collection, 'all', this.render);
+    },
+    render: function() {
+        logger.log('Rendering CategoryCollectionView');
+        
+        var items = [];
+        var categoryTemplate = this.categoryTemplate;
+        this.collection.forEach(function(c) {
+            items.push(categoryTemplate({ category: c.toJSON() }).trim());
+        });
+        // Add new elements.
+        this.main.html(items.join(""));
     }
 });
 
@@ -162,27 +221,6 @@ var AppRouter = Backbone.Router.extend({
 });
 
 /*******************************************************************************/
-/**************** Events *******************************************************/
-
-var events = {
-    // General events.
-    FILE_SYSTEM_READY: "fs_ok",
-    DOWNLOADING_COMPLETED: "down_ok",
-    LOADING_COMPLETED: "load_ok",
-    STALE_DATA: "stale",
-    FRESH_DATA: "fresh",
-    // Events for specific files.
-    UPDATE_INFO_AVAILABLE: "update_d",
-    UPDATE_INFO_LOADED: "update_l",
-    NEW_ARRIVALS_AVAILABLE: "new_d",
-    NEW_ARRIVALS_LOADED: "new_l",
-    ALL_FILMS_AVAILABLE: "all_films_d",
-    ALL_FILMS_LOADED: "all_films_l",
-    SHOWTIMES_AVAILABLE: "show_d",
-    SHOWTIMES_LOADED: "show_l"
-};
-
-/*******************************************************************************/
 /**************** Data *********************************************************/
 
 var data = {
@@ -193,14 +231,26 @@ var data = {
     newFilms: null,
     allFilms: null,
     showtimes: null,
+    categories: null,
+    categoryFilms: null,
     init: function() {
+        logger.log('Initalizing data');
         data.newFilms = new FilmCollection();
         data.allFilms = new FilmCollection();
+        data.showtimes = new Backbone.Collection();
+        data.categories = new CategoryCollection();
+        data.categoryFilms = new FilmCollection();
     },
     // Find a film by id.
     film: function(id) {
         logger.log("data.film " + id);
         return _.findWhere(data.allFilms, { id: id });
+    },
+    categoriesFromFilms: function(films) {
+        var categoriesRaw = _.chain(films).map(function(o) {
+                return o.category;
+            }).uniq().value();
+        return _.map(categoriesRaw, function(c) { return { name: c };});
     },
     loadSingleObject: function(text) {
         var retObj = {};
@@ -367,56 +417,20 @@ var data = {
 var views = {
     newFilmsView: null,
     allFilmsView: null,
+    filmView: null,
+    categoriesView: null,
+    categoryFilmsView: null,
     init: function() {
+        logger.log('Initializing views');
         views.newFilmsView = new FilmCollectionView({ el: $("#new"), collection: data.newFilms });
         views.allFilmsView = new FilmCollectionView({ el: $("#all"), collection: data.allFilms });
+        views.filmView = new FilmView({ el: $("#film_info")});
+        views.categoriesView = new CategoryCollectionView({ el: $("#categories"), collection: data.categories });
+        views.categoryFilmsView = new FilmCollectionView({ el: $("#category-films"), collection: data.categoryFilms });
     },
-//    renderSimple: function(title) {
-//        return "<li><a href=\"#\">" + title + "</a></li>";
-//    },
     downloadError: function() {
         $("div[data-role='footer']").find("h1").html("Η ενημέρωση απέτυχε");
     },
-//    prepareFilms: function(films, $ul) {
-//        logger.log("views.loadFilms: started");
-//        
-//        // Remove all elements from the list.
-//        $ul.empty();
-//        
-//        var items = [];
-//        _.chain(films).sortBy("title").forEach(function(f) {
-//            items.push(views.renderFilm(f));
-//        });
-//        // Add new elements.
-//        $ul.append(items.join(""));
-//        
-//        logger.log("Loaded " + items.length + " films.");
-//    },
-//    prepareCategories: function(films, $ul) {
-//        logger.log("views.loadCategories: started");
-//        
-//        // Remove all elements from the list.
-//        $ul.empty();
-//        
-//        var categories = _.chain(films).map(function(o) {
-//            return o.category;
-//        }).uniq().sort().value();
-//        
-//        var items = [];
-//        _.forEach(categories, function(c) {
-//            items.push(views.renderSimple(c));
-//        });
-//        
-//        // Add new elements.
-//        $ul.append(items.join(""));
-//        
-//        logger.log("Loaded " + items.length + " categories.");
-//    },
-//    prepareAll: function() {
-//        views.prepareFilms(data.newFilms, $("#new ul"));
-//        views.prepareFilms(data.allFilms, $("#all ul"));
-//        views.prepareCategories(data.allFilms, $("#categories ul"));
-//    },
     re: {
         beforeFilmId: /.*id=/,
         afterPageSelector: /\?.*$/
@@ -433,7 +447,7 @@ var views = {
         var pageSelector = urlObj.hash.replace(views.re.afterPageSelector, "");
 
         //var film = data.film(id);
-        var film = app.allFilms.findWhere({ id: id });
+        var film = data.allFilms.findWhere({ id: id });
         if (film) {
             // Get the page we are going to dump our content into.
             var $page = $(pageSelector);
@@ -472,15 +486,13 @@ var views = {
             $("div[data-role='footer']").find("h1").html("Τελευταία ενημέρωση:" + new Date(updateInfo.date).toDateString());
         });
         $.subscribe(events.NEW_ARRIVALS_LOADED, function(e, films) {
-            data.newFilms.reset(films);       
-            //views.prepareFilms(films, $("#new ul"));
+            data.newFilms.reset(films);
         });
         $.subscribe(events.ALL_FILMS_LOADED, function(e, films) {
             data.allFilms.reset(films);
-            //views.prepareFilms(films, $("#all ul"));
         });
-        $.subscribe(events.ALL_FILMS_LOADED, function(e, films) {
-            //views.prepareCategories(films, $("#categories ul"));
+        $.subscribe(events.ALL_FILMS_LOADED, function(e, films) {                        
+            data.categories.reset(data.categoriesFromFilms(films));
         });
         
         // Listen for any attempts to call changePage().
@@ -503,6 +515,7 @@ var views = {
                     // Call our internal method that builds the content for the film
                     // on the fly based on our in-memory film data structure.
                     views.showFilm(u, d.options);
+                    //filmView.model = 
         
                     // Make sure to tell changePage() we've handled this call so it doesn't
                     // have to do anything.
@@ -548,7 +561,6 @@ var app = {
     FILE_ALL_FILMS: "all_films.json",
     FILE_SHOWTIMES: "showtimes.json",
     FILE_UPDATE_INFO: "update_info.json",
-    
     initialize: function() {
         logger.log("app.initialize");
                         
@@ -560,6 +572,9 @@ var app = {
         views.init();
         
         this.bindEvents();
+        
+        // For browser debugging.
+        //this.loadRawData();
     },
     // Loads everything from file system.
     load: function() {
