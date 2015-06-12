@@ -135,9 +135,27 @@ var appFS= {
 };
 
 /*******************************************************************************/
-/**************** Models/Collections *******************************************/
+/**************** Data/Models/Collections **************************************/
 
-var Film = Backbone.Model.extend({ 
+var Film = Backbone.Model.extend({
+    defaults: {
+        id: "",
+        url: "",
+        image: "",
+        title: "",
+        origTitle: "",
+        category: "",
+        year: "",
+        filmType: "",
+        duration: "",
+        rated: "",
+        credits: "",
+        summary: "",
+        review: "",
+        imdb: "",
+        theatersUrl: "",
+        theaters: ""
+    }
 });
 
 var FilmCollection = Backbone.Collection.extend({
@@ -145,41 +163,10 @@ var FilmCollection = Backbone.Collection.extend({
     comparator: 'title'
 });
 
-var FilmCollectionView = Backbone.View.extend({    
-    filmTemplate: _.template($('#film-collection-template').html()),
-    initialize: function(options) {
-        logger.log('Initializing FilmCollectionView');
-        
-        this.main = this.$('ul');
-        this.listenTo(this.collection, 'all', this.render);
-    },
-    render: function() { 
-        logger.log('Rendering FilmCollectionView');
-        
-        var items = [];
-        var filmTemplate = this.filmTemplate;
-        this.collection.forEach(function(f) {
-            items.push(filmTemplate({ film: f.toJSON() }).trim());
-        });
-        // Add new elements.
-        this.main.html(items.join(""));
-        
-        return this;
+var Category = Backbone.Model.extend({
+    defaults: {
+        name: ""
     }
-});
-
-var FilmView = Backbone.View.extend({
-    filmTemplate: _.template($('#film-template').html()),
-    initialize: function(options) {
-        this.main = this.$('.content');
-    },
-    render: function() {
-        logger.log('Rendering FilmView');
-        
-    }
-});
-
-var Category = Backbone.Model.extend({ 
 });
 
 var CategoryCollection = Backbone.Collection.extend({
@@ -187,41 +174,25 @@ var CategoryCollection = Backbone.Collection.extend({
     comparator: 'name'
 });
 
-var CategoryCollectionView = Backbone.View.extend({
-    categoryTemplate: _.template($('#category-template').html()),
-    initialize: function(options) {
-        this.main = this.$('ul');
-        this.listenTo(this.collection, 'all', this.render);
-    },
-    render: function() {
-        logger.log('Rendering CategoryCollectionView');
-        
-        var items = [];
-        var categoryTemplate = this.categoryTemplate;
-        this.collection.forEach(function(c) {
-            items.push(categoryTemplate({ category: c.toJSON() }).trim());
-        });
-        // Add new elements.
-        this.main.html(items.join(""));
+var Showtime = Backbone.Model.extend({
+    defaults: {
+        filmId: "",
+        area: "",
+        cinemaName: "",
+        cinemaUrl: "",
+        address: "",
+        map: "",
+        phone: "",
+        tech_info: "",
+        price: "",
+        rooms: ""
     }
 });
 
-/*******************************************************************************/
-/**************** Router *******************************************************/
-
-var AppRouter = Backbone.Router.extend({
-    routes: {        
-        // #film-info/1234
-        "film-info/:id":    "film_info"
-        //"film-info/:id":    "views.showFilm"
-    },
-    film_info: function(id) {
-        logger.log('Film info ' + id);
-    }
+var ShowtimeCollection = Backbone.Collection.extend({
+    model: Showtime,
+    comparator: 'area'
 });
-
-/*******************************************************************************/
-/**************** Data *********************************************************/
 
 var data = {
     updateInfo: null,
@@ -233,19 +204,16 @@ var data = {
     showtimes: null,
     categories: null,
     categoryFilms: null,
+    film: null,
     init: function() {
         logger.log('Initalizing data');
-        data.newFilms = new FilmCollection();
-        data.allFilms = new FilmCollection();
-        data.showtimes = new Backbone.Collection();
-        data.categories = new CategoryCollection();
-        data.categoryFilms = new FilmCollection();
-    },
-    // Find a film by id.
-    film: function(id) {
-        logger.log("data.film " + id);
-        return _.findWhere(data.allFilms, { id: id });
-    },
+        this.newFilms = new FilmCollection();
+        this.allFilms = new FilmCollection();
+        this.showtimes = new ShowtimeCollection();
+        this.categories = new CategoryCollection();
+        this.categoryFilms = new FilmCollection();
+        this.film = new Film();
+    },    
     categoriesFromFilms: function(films) {
         var categoriesRaw = _.chain(films).map(function(o) {
                 return o.category;
@@ -414,6 +382,60 @@ var data = {
 /*******************************************************************************/
 /**************** Views ********************************************************/
 
+var FilmCollectionView = Backbone.View.extend({    
+    filmTemplate: _.template($('#film-collection-template').html()),
+    initialize: function(options) {
+        logger.log('Initializing FilmCollectionView');
+        
+        this.main = this.$('ul');
+        this.listenTo(this.collection, 'all', this.render);
+    },
+    render: function() { 
+        logger.log('Rendering FilmCollectionView');
+        
+        var items = [];
+        var filmTemplate = this.filmTemplate;
+        this.collection.forEach(function(f) {
+            items.push(filmTemplate({ film: f.toJSON() }).trim());
+        });
+        // Add new elements.
+        this.main.html(items.join(""));
+        
+        return this;
+    }
+});
+
+var CategoryCollectionView = Backbone.View.extend({
+    categoryTemplate: _.template($('#category-template').html()),
+    initialize: function(options) {
+        this.main = this.$('ul');
+        this.listenTo(this.collection, 'all', this.render);
+    },
+    render: function() {
+        logger.log('Rendering CategoryCollectionView');
+        
+        var items = [];
+        var categoryTemplate = this.categoryTemplate;
+        this.collection.forEach(function(c) {
+            items.push(categoryTemplate({ category: c.toJSON() }).trim());
+        });
+        // Add new elements.
+        this.main.html(items.join(""));
+    }
+});
+
+var FilmView = Backbone.View.extend({
+    filmTemplate: _.template($('#film-template').html()),
+    initialize: function(options) {   
+        this.main = this.$('#details');
+        this.listenTo(this.model, 'all', this.render);
+    },
+    render: function() {
+        logger.log('Rendering FilmView');
+        this.main.html(this.filmTemplate({ film: this.model.toJSON() }).trim());        
+    }
+});
+
 var views = {
     newFilmsView: null,
     allFilmsView: null,
@@ -424,62 +446,62 @@ var views = {
         logger.log('Initializing views');
         views.newFilmsView = new FilmCollectionView({ el: $("#new"), collection: data.newFilms });
         views.allFilmsView = new FilmCollectionView({ el: $("#all"), collection: data.allFilms });
-        views.filmView = new FilmView({ el: $("#film_info")});
+        views.filmView = new FilmView({ el: $("#film"), model: data.film });
         views.categoriesView = new CategoryCollectionView({ el: $("#categories"), collection: data.categories });
         views.categoryFilmsView = new FilmCollectionView({ el: $("#category-films"), collection: data.categoryFilms });
     },
     downloadError: function() {
         $("div[data-role='footer']").find("h1").html("Η ενημέρωση απέτυχε");
     },
-    re: {
-        beforeFilmId: /.*id=/,
-        afterPageSelector: /\?.*$/
-    },
+//    re: {
+//        beforeFilmId: /.*id=/,
+//        afterPageSelector: /\?.*$/
+//    },
     // Load the data for a specific film, based on
     // the URL passed in. Generate markup for the items in the
     // film, inject it into an embedded page, and then make
     // that page the current active page.
-    showFilm: function(urlObj, options) {
-        logger.log("views.showFilm " + urlObj.href);
-        // Get the id of the film from the URL.
-        var id = urlObj.hash.replace(views.re.beforeFilmId, "");
-        // Get the pageId from the URL.
-        var pageSelector = urlObj.hash.replace(views.re.afterPageSelector, "");
-
-        //var film = data.film(id);
-        var film = data.allFilms.findWhere({ id: id });
-        if (film) {
-            // Get the page we are going to dump our content into.
-            var $page = $(pageSelector);
-            // Get the header for the page.
-            var $header = $page.children( ":jqmData(role=header)" );
-            // Get the content area element for the page.
-            var $content = $page.children( ":jqmData(role=content)" );
-
-            // Replace.
-            $header.find("h1").html(film.title);
-            $content.find("#film-orig-title").html(film.origTitle);
-            $content.find("#film-year").html(film.year);
-            $content.find("#film-category").html(film.category);
-    
-            // Pages are lazily enhanced. We call page() on the page
-            // element to make sure it is always enhanced before we
-            // attempt to enhance the listview markup we just injected.
-            // Subsequent calls to page() are ignored since a page/widget
-            // can only be enhanced once.
-            $page.page();
-    
-            // We don't want the data-url of the page we just modified
-            // to be the url that shows up in the browser's location field,
-            // so set the dataUrl option to the URL for the category
-            // we just loaded.
-            options.dataUrl = urlObj.href;
-    
-            // Now call changePage() and tell it to switch to
-            // the page we just modified.
-            $.mobile.changePage($page, options);
-        }
-    },
+//    showFilm: function(urlObj, options) {
+//        logger.log("views.showFilm " + urlObj.href);
+//        // Get the id of the film from the URL.
+//        var id = urlObj.hash.replace(views.re.beforeFilmId, "");
+//        // Get the pageId from the URL.
+//        var pageSelector = urlObj.hash.replace(views.re.afterPageSelector, "");
+//
+//        //var film = data.film(id);
+//        var film = data.allFilms.findWhere({ id: id });
+//        if (film) {
+//            // Get the page we are going to dump our content into.
+//            var $page = $(pageSelector);
+//            // Get the header for the page.
+//            var $header = $page.children( ":jqmData(role=header)" );
+//            // Get the content area element for the page.
+//            var $content = $page.children( ":jqmData(role=content)" );
+//
+//            // Replace.
+//            $header.find("h1").html(film.title);
+//            $content.find("#film-orig-title").html(film.origTitle);
+//            $content.find("#film-year").html(film.year);
+//            $content.find("#film-category").html(film.category);
+//    
+//            // Pages are lazily enhanced. We call page() on the page
+//            // element to make sure it is always enhanced before we
+//            // attempt to enhance the listview markup we just injected.
+//            // Subsequent calls to page() are ignored since a page/widget
+//            // can only be enhanced once.
+//            $page.page();
+//    
+//            // We don't want the data-url of the page we just modified
+//            // to be the url that shows up in the browser's location field,
+//            // so set the dataUrl option to the URL for the category
+//            // we just loaded.
+//            options.dataUrl = urlObj.href;
+//    
+//            // Now call changePage() and tell it to switch to
+//            // the page we just modified.
+//            $.mobile.changePage($page, options);
+//        }
+//    },
     bindEvents: function() {
         //$.subscribe(events.LOADING_COMPLETED, views.prepareAll);
         $.subscribe(events.UPDATE_INFO_LOADED, function(e, updateInfo) {
@@ -494,39 +516,42 @@ var views = {
         $.subscribe(events.ALL_FILMS_LOADED, function(e, films) {                        
             data.categories.reset(data.categoriesFromFilms(films));
         });
-        
-        // Listen for any attempts to call changePage().
-        $(document).bind( "pagebeforechange", function(e, d) {
-        
-            // We only want to handle changePage() calls where the caller is
-            // asking us to load a page by URL.
-            if (typeof d.toPage === "string") {
-        
-                // We are being asked to load a page by URL, but we only
-                // want to handle URLs that request the data for a specific
-                // category.
-                var u = $.mobile.path.parseUrl(d.toPage),
-                    reFilmInfo = /^#film-info/,
-                    reUpdate = /^#update/;
-        
-                if (u.hash.search(reFilmInfo) !== -1) {
-        
-                    // We're being asked to display the items for a specific film.
-                    // Call our internal method that builds the content for the film
-                    // on the fly based on our in-memory film data structure.
-                    views.showFilm(u, d.options);
-                    //filmView.model = 
-        
-                    // Make sure to tell changePage() we've handled this call so it doesn't
-                    // have to do anything.
-                    e.preventDefault();
-                }
-                else if (u.hash.search(reUpdate) !== -1) {
-                    app.update(true);
-                    e.preventDefault();
-                }
-            }
+        $.subscribe(events.SHOWTIMES_LOADED, function(e, showtimes) {                        
+            data.showtimes.reset(showtimes);
         });
+        
+//        // Listen for any attempts to call changePage().
+//        $(document).bind( "pagebeforechange", function(e, d) {
+//        
+//            // We only want to handle changePage() calls where the caller is
+//            // asking us to load a page by URL.
+//            if (typeof d.toPage === "string") {
+//        
+//                // We are being asked to load a page by URL, but we only
+//                // want to handle URLs that request the data for a specific
+//                // category.
+//                var u = $.mobile.path.parseUrl(d.toPage),
+//                    reFilmInfo = /^#film-info/,
+//                    reUpdate = /^#update/;
+//        
+//                if (u.hash.search(reFilmInfo) !== -1) {
+//        
+//                    // We're being asked to display the items for a specific film.
+//                    // Call our internal method that builds the content for the film
+//                    // on the fly based on our in-memory film data structure.
+//                    views.showFilm(u, d.options);
+//                    //filmView.model = 
+//        
+//                    // Make sure to tell changePage() we've handled this call so it doesn't
+//                    // have to do anything.
+//                    e.preventDefault();
+//                }
+//                else if (u.hash.search(reUpdate) !== -1) {
+//                    app.update(true);
+//                    e.preventDefault();
+//                }
+//            }
+//        });
     }
 };
 
@@ -550,6 +575,46 @@ var views = {
 var app = new AppView();*/
 
 /*******************************************************************************/
+/**************** Router *******************************************************/
+
+var AppRouter = Backbone.Router.extend({
+    routes: {            
+        "film/:id":    "film",
+        "*path": "defaultHandler"
+    },
+    film: function(id) {
+        logger.log("AppRouter.film " + id);
+                
+        //var film = data.film(id);
+        var film = data.allFilms.findWhere({ id: id });
+        if (film) {            
+            // Get the header for the page.
+            views.filmView.model.set(film.toJSON());
+            
+            // Pages are lazily enhanced. We call page() on the page
+            // element to make sure it is always enhanced before we
+            // attempt to enhance the listview markup we just injected.
+            // Subsequent calls to page() are ignored since a page/widget
+            // can only be enhanced once.
+            //$page.page();
+    
+            // We don't want the data-url of the page we just modified
+            // to be the url that shows up in the browser's location field,
+            // so set the dataUrl option to the URL for the category
+            // we just loaded.
+            //options.dataUrl = urlObj.href;
+    
+            // Now call changePage() and tell it to switch to
+            // the page we just modified.
+            $.mobile.changePage(views.filmView.$el, { reverse: false, changeHash: false });
+        }
+    },
+    defaultHandler: function(path) {
+        logger.log("AppRouter.default " + path);
+    }
+});
+
+/*******************************************************************************/
 /**************** Application **************************************************/
 
 var app = {
@@ -561,12 +626,9 @@ var app = {
     FILE_ALL_FILMS: "all_films.json",
     FILE_SHOWTIMES: "showtimes.json",
     FILE_UPDATE_INFO: "update_info.json",
+    router: null,
     initialize: function() {
-        logger.log("app.initialize");
-                        
-        //this.router = new AppRouter();
-        //Backbone.history.start();
-        //this.router.on('route:film-info'
+        logger.log("app.initialize");                                
         
         data.init();
         views.init();
@@ -575,7 +637,7 @@ var app = {
         
         // For browser debugging.
         //this.loadRawData();
-    },
+    },    
     // Loads everything from file system.
     load: function() {
         $.publish(events.NEW_ARRIVALS_AVAILABLE, [app.FILE_NEW_ARRIVALS]);
@@ -651,17 +713,20 @@ var app = {
         
         data.bindEvents();
         views.bindEvents();
-    },
-    // Update DOM on a Received Event
-    receivedEvent: function(id) {
-        logger.log('Received Event: ' + id);
-    },
+    },    
     // deviceready Event Handler
     //
-    // The scope of 'this' is the event. In order to call the 'receivedEvent'
-    // function, we must explicity call 'app.receivedEvent(...);'
+    // Note that the scope of 'this' is the event.
     onDeviceReady: function() {
-        app.receivedEvent('deviceready');
+        logger.log('Received Event: deviceready');
+        
+        // Prevents all anchor click handling
+        $.mobile.linkBindingEnabled = false;
+        // Disabling this will prevent jQuery Mobile from handling hash changes
+        $.mobile.hashListeningEnabled = false;                
+        app.router = new AppRouter();
+        Backbone.history.start();
+        
         appFS.init();
     }
 };

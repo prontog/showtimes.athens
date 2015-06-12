@@ -23,6 +23,8 @@
         <meta name="format-detection" content="telephone=no" />
         <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+        <!-- Enable all requests, inline styles, and eval() -->
+        <meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'">
 <!--        <link rel="stylesheet" type="text/css" href="css/index.css" />-->
         <link rel="stylesheet" href="css/flat_1.min.css" />
 		<link rel="stylesheet" href="css/jquery.mobile.icons.min.css" />
@@ -121,15 +123,8 @@
 				<h1></h1>
 			</div>
 		</div>
-        <div id="film-info" data-role="page" data-theme="a">
-			<div data-role="header" data-position="inline">
-				<h1>Film name</h1>
-			</div>
-			<div data-role="content" data-theme="a">
-				<div id="film-orig-title"></div>
-                <div id="film-year"></div>
-                <div id="film-category"></div>
-			</div>
+        <div id="film" data-role="page" data-theme="a">
+            <div id="details"></div>
             <div data-role="footer" data-position="inline">
 				<h1></h1>
 			</div>
@@ -138,10 +133,18 @@
             <div><%= film.title %></div>
         </script>
         <script id="film-collection-template" type="text/template">
-            <li><a href="#film-info/<%= film.id %>"> <%= film.title %> </a></li>
+            <li><a href="#film/<%= film.id %>"> <%= film.title %> </a></li>
         </script>
         <script id="film-template" type="text/template">
             <div><%= film.title %></div>
+            <div data-role="header" data-position="inline">
+                <h1><%= film.title %></h1>
+			</div>
+			<div data-role="content" data-theme="a">
+				<div id="film-orig-title"><%= film.origTitle %></div>
+                <div id="film-year"><%= film.year %></div>
+                <div id="film-category"><%= film.category %></div>
+			</div>            
         </script>
         <script id="category-template" type="text/template">
             <li><a href="#category-films/<%= category.name %>"> <%= category.name %> </a></li>
