@@ -1,0 +1,41 @@
+{
+    "prepare_queue": {
+        "installed": [],
+        "uninstalled": []
+    },
+    "config_munge": {
+        "files": {
+            "config.xml": {
+                "parents": {
+                    "/*": [
+                        {
+                            "xml": "<feature name=\"Device\"><param name=\"browser-package\" value=\"Device\" /></feature>",
+                            "count": 1
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "installed_plugins": {
+        "cordova-plugin-console": {
+            "PACKAGE_NAME": "net.ronto.showtimes.athens"
+        },
+        "cordova-plugin-crosswalk-webview": {
+            "PACKAGE_NAME": "net.ronto.showtimes.athens"
+        },
+        "cordova-plugin-device": {
+            "PACKAGE_NAME": "net.ronto.showtimes.athens"
+        },
+        "cordova-plugin-file": {
+            "PACKAGE_NAME": "net.ronto.showtimes.athens"
+        },
+        "cordova-plugin-file-transfer": {
+            "PACKAGE_NAME": "net.ronto.showtimes.athens"
+        },
+        "cordova-plugin-whitelist": {
+            "PACKAGE_NAME": "net.ronto.showtimes.athens"
+        }
+    },
+    "dependent_plugins": {}
+}
