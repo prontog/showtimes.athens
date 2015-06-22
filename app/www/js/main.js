@@ -1,6 +1,6 @@
 /*jslint nomen:true, vars:true, devel:true, browser:true, white:true */
 /*globals _:true, $:true */
-/*globals FileError:true, LocalFileSystem:true, FileReader:true, FileTransfer:true, Backbone:true */
+/*globals FileError:true, LocalFileSystem:true, FileReader:true, FileTransfer:true, Backbone:true, cordova: true */
 "use strict";
 
 /*******************************************************************************/
@@ -57,26 +57,26 @@ var appFS= {
     enrichError: function(e) {        
         var whatHappened = "";
     
-//        switch (e.code) {
-//        case FileError.QUOTA_EXCEEDED_ERR:
-//            whatHappened = "QUOTA_EXCEEDED_ERR";
-//            break;
-//        case FileError.NOT_FOUND_ERR:
-//            whatHappened = "NOT_FOUND_ERR";
-//            break;
-//        case FileError.SECURITY_ERR:
-//            whatHappened = "SECURITY_ERR";
-//            break;
-//        case FileError.INVALID_MODIFICATION_ERR:
-//            whatHappened = "INVALID_MODIFICATION_ERR";
-//            break;
-//        case FileError.INVALID_STATE_ERR:
-//            whatHappened = "INVALID_STATE_ERR";
-//            break;
-//        default:
-//            whatHappened = "Unknown Error";
-//            break;
-//        }
+        switch (e.code) {
+        case FileError.QUOTA_EXCEEDED_ERR:
+            whatHappened = "QUOTA_EXCEEDED_ERR";
+            break;
+        case FileError.NOT_FOUND_ERR:
+            whatHappened = "NOT_FOUND_ERR";
+            break;
+        case FileError.SECURITY_ERR:
+            whatHappened = "SECURITY_ERR";
+            break;
+        case FileError.INVALID_MODIFICATION_ERR:
+            whatHappened = "INVALID_MODIFICATION_ERR";
+            break;
+        case FileError.INVALID_STATE_ERR:
+            whatHappened = "INVALID_STATE_ERR";
+            break;
+        default:
+            whatHappened = "Unknown Error";
+            break;
+        }
 
         var enriched = _.clone(e);
         enriched.whatHappened = whatHappened;
@@ -331,8 +331,9 @@ var data = {
             return true;
         }
         
+        var diffMs;
         if (lastUpdateInfo) {
-            var diffMs = data.updateInfo.date - lastUpdateInfo.date;
+            diffMs = data.updateInfo.date - lastUpdateInfo.date;
             if (diffMs === 0) {
                 logger.log(msgHeader + "Data is up to date.");
                 return false;
@@ -340,7 +341,7 @@ var data = {
             diffDate = new Date(diffMs);
         }
         else {
-            var diffMs = new Date().getTime() - data.updateInfo.date;
+            diffMs = new Date().getTime() - data.updateInfo.date;
             if (diffMs < 0) {
                 // ToDo: Notify the user. This could end up to a never ending update process.
                 logger.log(msgHeader + "Invalid date. Something went fishy!");
@@ -712,14 +713,20 @@ var app = {
         $.mobile.pushStateEnabled = false;
         
         app.router = new AppRouter();
-        Backbone.history.start();                
+        Backbone.history.start(); 
+        
+        if (cordova.platformId !== "browser") {
+            appFS.init();
+        }
     },
-    // deviceready Event Handler
+    // filePluginIsReady Event Handler
     //
     // Note that the scope of 'this' is the event.
     onfilePluginIsReady: function() {
-        logger.log('Received Event: filePluginIsReady');                
-        appFS.init();
+        if (cordova.platformId === "browser") {
+            logger.log('Received Event: filePluginIsReady');                
+            appFS.init();            
+        }        
     }
 };
  
