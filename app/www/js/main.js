@@ -427,7 +427,7 @@ var FilmCollectionView = Backbone.View.extend({
         });
         // Add new elements.
         this.$ul.html(items.join(""));
-        
+                       
         return this;
     }
 });
@@ -447,7 +447,9 @@ var CategoryCollectionView = Backbone.View.extend({
             items.push(categoryTemplate({ category: c.toJSON() }).trim());
         });
         // Add new elements.
-        this.$ul.html(items.join(""));        
+        this.$ul.html(items.join(""));
+                
+        return this;
     }
 });
 
@@ -467,6 +469,8 @@ var AreaCollectionView = Backbone.View.extend({
         });
         // Add new elements.
         this.$ul.html(items.join(""));
+                
+        return this;
     }
 });
 
@@ -479,6 +483,8 @@ var FilmView = Backbone.View.extend({
     render: function() {
         logger.log('Rendering FilmView');
         this.$details.html(this.filmTemplate({ film: this.model.toJSON() }).trim());        
+                
+        return this;
     }
 });
 
@@ -543,19 +549,30 @@ var app = new AppView();*/
 /**************** Router *******************************************************/
 
 var AppRouter = Backbone.Router.extend({
-    routes: {            
-        "film/:id":    "film",
+    initialize: function(options) {
+        logger.log("AppRouter.initialize");
+        
+        //this.route(/film\/([^\/]+)$/, "film");
+                
+        Backbone.history.start({ pushState: false });
+    },
+    routes: {      
+        "": "main",
+        "film/:id":    "film",       
         "category-films/:name": "category",
-        "area/:name": "area"
-        //"*path": "defaultHandler"
+        "area/:name": "area",
+        "*path": "defaultHandler"
+    },
+    main: function() {
+        logger.log("AppRouter.main");
+        $.mobile.pageContainer.pagecontainer("change", "", { reverse: false, changeHash: false });
     },
     film: function(id) {
         logger.log("AppRouter.film " + id);
-                
-        //var film = data.film(id);
+                        
         var film = data.allFilms.findWhere({ id: id });
         if (film) {            
-            // Get the header for the page.
+            // Set the model.
             views.filmView.model.set(film.toJSON());
             
             // Pages are lazily enhanced. We call page() on the page
@@ -563,7 +580,7 @@ var AppRouter = Backbone.Router.extend({
             // attempt to enhance the listview markup we just injected.
             // Subsequent calls to page() are ignored since a page/widget
             // can only be enhanced once.
-            //$page.page();
+            //views.filmView.$el.page();
     
             // We don't want the data-url of the page we just modified
             // to be the url that shows up in the browser's location field,
@@ -573,7 +590,7 @@ var AppRouter = Backbone.Router.extend({
     
             // Now call changePage() and tell it to switch to
             // the page we just modified.
-            $.mobile.changePage(views.filmView.$el, { reverse: false, changeHash: false });            
+            $.mobile.pageContainer.pagecontainer("change", views.filmView.$el, { reverse: false, changeHash: false });            
         }
     },
     category: function(name) {
@@ -586,7 +603,7 @@ var AppRouter = Backbone.Router.extend({
             views.categoryFilmsView.$el.find("div h1").first().html(name);
             // Now call changePage() and tell it to switch to
             // the page we just modified.
-            $.mobile.changePage(views.categoryFilmsView.$el, { reverse: false, changeHash: false });
+            $.mobile.pageContainer.pagecontainer("change", views.categoryFilmsView.$el, { reverse: false, changeHash: false });
         }
     },
     area: function(name) {
@@ -595,6 +612,8 @@ var AppRouter = Backbone.Router.extend({
     },
     defaultHandler: function(path) {
         logger.log("AppRouter.default " + path);
+        
+        $.mobile.pageContainer.pagecontainer("change", "#" + path, { reverse: false, changeHash: false });
     }
 });
 
@@ -703,17 +722,9 @@ var app = {
     //
     // Note that the scope of 'this' is the event.
     onDeviceReady: function() {
-        logger.log('Received Event: deviceready');
+        logger.log('Received Event: deviceready');                
         
-        // Prevents all anchor click handling
-        $.mobile.linkBindingEnabled = false;
-        // Disabling this will prevent jQuery Mobile from handling hash changes
-        $.mobile.hashListeningEnabled = false;          
-        $.mobile.ajaxEnabled = false;
-        $.mobile.pushStateEnabled = false;
-        
-        app.router = new AppRouter();
-        Backbone.history.start(); 
+        app.router = new AppRouter();         
         
         if (cordova.platformId !== "browser") {
             appFS.init();

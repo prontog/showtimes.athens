@@ -32,12 +32,12 @@
         <title>Showtimes</title>
     </head>
     <body>
-        <div id="main" data-role="page" data-dom-cache="true" data-theme="a">
+        <div id="main" data-role="page" data-dom-cache="false" >
 			<div data-role="header" data-position="inline">
 				<h1>Showtimes.Athens</h1>
                 <a href="#settings" data-icon="gear" class="ui-btn-right"></a>
 			</div>
-			<div data-role="content" data-theme="a">
+			<div data-role="content" >
 				<ul data-role="listview" data-inset="true">
                     <li><a href="#new">Νέες ταινίες</a></li>
                     <li><a href="#all">'Ολες οι ταινίες</a></li>
@@ -49,11 +49,11 @@
 				<h1></h1>
 			</div>
 		</div>
-        <div id="settings" data-role="page" data-add-back-btn="true" data-dom-cache="true" data-theme="a">
+        <div id="settings" data-role="page" data-add-back-btn="true" data-dom-cache="false" >
 			<div data-role="header" data-position="inline">
 				<h1>Ρυθμίσεις</h1>
 			</div>
-			<div data-role="content" data-theme="a">
+			<div data-role="content" >
 				<ul data-role="listview" data-inset="true" data-filter="true">
                     <li><a href="#update">Ενημέρωση</a></li>
                     <li><a href="#about">Σχετικά με το app</a></li>
@@ -63,11 +63,11 @@
 				<h1></h1>
 			</div>
 		</div>
-        <div id="new" data-role="page" data-add-back-btn="true" data-dom-cache="true" data-theme="a">
+        <div id="new" data-role="page" data-add-back-btn="true" data-dom-cache="false" >
 			<div data-role="header" data-position="inline">
 				<h1>Νέες ταινίες</h1>
 			</div>
-			<div data-role="content" data-theme="a">
+			<div data-role="content" >
 				<ul data-role="listview" data-inset="true" data-filter="true">                    
                 </ul>
 			</div>
@@ -75,11 +75,11 @@
 				<h1></h1>
 			</div>
 		</div>
-        <div id="all" data-role="page" data-add-back-btn="true" data-dom-cache="true" data-theme="a">
+        <div id="all" data-role="page" data-add-back-btn="true" data-dom-cache="false" >
 			<div data-role="header" data-position="inline">
 				<h1>'Ολες οι ταινίες</h1>
 			</div>
-			<div data-role="content" data-theme="a">
+			<div data-role="content" >
 				<ul data-role="listview" data-inset="true" data-filter="true">
                 </ul>
 			</div>
@@ -87,11 +87,11 @@
 				<h1></h1>
 			</div>
 		</div>
-        <div id="categories" data-role="page" data-add-back-btn="true" data-dom-cache="true" data-theme="a">
+        <div id="categories" data-role="page" data-add-back-btn="true" data-dom-cache="false" >
 			<div data-role="header" data-position="inline">
 				<h1>Ανά κατηγορία</h1>
 			</div>
-			<div data-role="content" data-theme="a">
+			<div data-role="content" >
 				<ul data-role="listview" data-inset="true" data-filter="true">
                 </ul>
 			</div>
@@ -99,11 +99,11 @@
 				<h1></h1>
 			</div>
 		</div>
-        <div id="category-films" data-role="page" data-add-back-btn="true" data-dom-cache="true" data-theme="a">
+        <div id="category-films" data-role="page" data-add-back-btn="true" data-dom-cache="false" >
 			<div data-role="header" data-position="inline">
 				<h1></h1>
 			</div>
-			<div data-role="content" data-theme="a">
+			<div data-role="content" >
 				<ul data-role="listview" data-inset="true" data-filter="true">
                 </ul>
 			</div>
@@ -111,11 +111,11 @@
 				<h1></h1>
 			</div>
 		</div>
-        <div id="areas" data-role="page" data-add-back-btn="true" data-dom-cache="true" data-theme="a">
+        <div id="areas" data-role="page" data-add-back-btn="true" data-dom-cache="false" >
 			<div data-role="header" data-position="inline">
 				<h1>Ανά περιοχή</h1>
 			</div>
-			<div data-role="content" data-theme="a">
+			<div data-role="content" >
 				<ul data-role="listview" data-inset="true" data-filter="true">
                 </ul>
 			</div>
@@ -123,7 +123,7 @@
 				<h1></h1>
 			</div>
 		</div>
-        <div id="film" data-role="page" data-theme="a">
+        <div id="film" data-role="page" >
             <div id="details"></div>
             <div data-role="footer" data-position="inline">
 				<h1></h1>
@@ -135,12 +135,11 @@
         <script id="film-collection-template" type="text/template">
             <li><a href="#film/<%= film.id %>"> <%= film.title %> </a></li>
         </script>
-        <script id="film-template" type="text/template">
-            <div><%= film.title %></div>
+        <script id="film-template" type="text/template">            
             <div data-role="header" data-position="inline">
                 <h1><%= film.title %></h1>
 			</div>
-			<div data-role="content" data-theme="a">
+			<div data-role="content" >
 				<div id="film-orig-title"><%= film.origTitle %></div>
                 <div id="film-year"><%= film.year %></div>
                 <div id="film-category"><%= film.category %></div>
@@ -153,6 +152,18 @@
             <li><a href="#area/<%= area.name %>"> <%= area.name %> </a></li>
         </script>
         <script src="js/jquery-1.10.2.min.js"></script>
+        <script>
+            $( document ).on( "mobileinit", function() {
+                console.log("Received Event: mobileinit");
+                // Prevents all anchor click handling
+                $.mobile.linkBindingEnabled = false;
+                // Disabling this will prevent jQuery Mobile from handling hash changes
+                $.mobile.hashListeningEnabled = false;          
+                //$.mobile.ajaxEnabled = false;
+                //$.mobile.pushStateEnabled = false;
+                //$.mobile.changePage.defaults.changeHash = false;            
+            });
+        </script>
 		<script src="js/jquery.mobile-1.4.5.min.js"></script>
         <script src="js/jquery.ba-tinypubsub.min.js"></script>
         <script src="js/underscore-min.js"></script>
