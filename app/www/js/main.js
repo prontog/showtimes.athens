@@ -477,12 +477,13 @@ var AreaCollectionView = Backbone.View.extend({
 var FilmView = Backbone.View.extend({
     filmTemplate: _.template($('#film-template').html()),
     initialize: function(options) {   
-        this.$details = this.$('#details');
+        this.$article = this.$('article');
         this.listenTo(this.model, 'all', this.render);
     },
     render: function() {
         logger.log('Rendering FilmView');
-        this.$details.html(this.filmTemplate({ film: this.model.toJSON() }).trim());        
+        this.$article.prev('header').children('h1').html(this.model.get('title'));
+        this.$article.html(this.filmTemplate({ film: this.model.toJSON() }).trim());        
                 
         return this;
     }
@@ -505,12 +506,12 @@ var views = {
         views.areasView = new AreaCollectionView({ el: $("#areas"), collection: data.areas });
     },
     downloadError: function() {
-        $("div[data-role='footer']").find("h1").html("Η ενημέρωση απέτυχε");
+        $("footer[data-role='footer']").find("h1").html("Η ενημέρωση απέτυχε");
     },
     bindEvents: function() {
         //$.subscribe(events.LOADING_COMPLETED, views.prepareAll);
         $.subscribe(events.UPDATE_INFO_LOADED, function(e, updateInfo) {
-            $("div[data-role='footer']").find("h1").html("Τελευταία ενημέρωση:" + new Date(updateInfo.date).toDateString());
+            $("footer[data-role='footer']").find("h1").html("Τελευταία ενημέρωση:" + new Date(updateInfo.date).toDateString());
         });
         $.subscribe(events.NEW_ARRIVALS_LOADED, function(e, films) {
             data.newFilms.reset(films);
@@ -547,13 +548,10 @@ var app = new AppView();*/
 
 /*******************************************************************************/
 /**************** Router *******************************************************/
-
+/* Backbone Router that replaces the default JQM routing. */
 var AppRouter = Backbone.Router.extend({
     initialize: function(options) {
-        logger.log("AppRouter.initialize");
-        
-        //this.route(/film\/([^\/]+)$/, "film");
-                
+        logger.log("AppRouter.initialize");                                
         Backbone.history.start({ pushState: false });
     },
     routes: {      
@@ -573,23 +571,8 @@ var AppRouter = Backbone.Router.extend({
         var film = data.allFilms.findWhere({ id: id });
         if (film) {            
             // Set the model.
-            views.filmView.model.set(film.toJSON());
-            
-            // Pages are lazily enhanced. We call page() on the page
-            // element to make sure it is always enhanced before we
-            // attempt to enhance the listview markup we just injected.
-            // Subsequent calls to page() are ignored since a page/widget
-            // can only be enhanced once.
-            //views.filmView.$el.page();
-    
-            // We don't want the data-url of the page we just modified
-            // to be the url that shows up in the browser's location field,
-            // so set the dataUrl option to the URL for the category
-            // we just loaded.
-            //options.dataUrl = urlObj.href;
-    
-            // Now call changePage() and tell it to switch to
-            // the page we just modified.
+            views.filmView.model.set(film.toJSON());                        
+                
             $.mobile.pageContainer.pagecontainer("change", views.filmView.$el, { reverse: false, changeHash: false });            
         }
     },
@@ -600,9 +583,8 @@ var AppRouter = Backbone.Router.extend({
         var films = data.allFilms.where({ category: name });
         if (films) {            
             data.categoryFilms.reset(films);
-            views.categoryFilmsView.$el.find("div h1").first().html(name);
-            // Now call changePage() and tell it to switch to
-            // the page we just modified.
+            views.categoryFilmsView.$el.find("header h1").first().html(name);
+                        
             $.mobile.pageContainer.pagecontainer("change", views.categoryFilmsView.$el, { reverse: false, changeHash: false });
         }
     },
@@ -611,8 +593,7 @@ var AppRouter = Backbone.Router.extend({
             
     },
     defaultHandler: function(path) {
-        logger.log("AppRouter.default " + path);
-        
+        logger.log("AppRouter.default " + path);                
         $.mobile.pageContainer.pagecontainer("change", "#" + path, { reverse: false, changeHash: false });
     }
 });
