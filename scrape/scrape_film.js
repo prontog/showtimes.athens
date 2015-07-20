@@ -38,7 +38,12 @@ scrape(url, function(ctx) {
     // Original title (EN)
     var origTitle = $h1_titles.children("span").first().text().trim();
     // Title (GRE)
-    var title = $h1_titles.text().replace(origTitle, "").trim();
+    var title_html = $h1_titles.html();
+    var title = title_html.substr(0, title_html.search("<br>")).trim();
+    // When both titles are the same, the span is empty.
+    if (origTitle === "") {
+        origTitle = title;
+    }    
     // stars. The half stars for the film can be found in the last digit.
     //var stars = $placeContainer.children("div.stars15h")[0].className;
     // ToCheck: Do I need this?
@@ -78,7 +83,8 @@ scrape(url, function(ctx) {
     var film = {
         id: id,
         url: url,
-        image: image,
+        image: "http://showtimes.ronto.net/data/img/" + id + ".jpg",
+        athinoramaImage: "http://www.athinorama.gr/lmnts/events/cinema/" + id + "/Poster.jpg",
         title: title,
         origTitle: origTitle,
         category: category,
