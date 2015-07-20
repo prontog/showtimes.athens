@@ -103,8 +103,9 @@
 				<h1></h1>
 			</footer>
 		</section>
-        <section id="category-films" data-role="page" data-add-back-btn="true" data-dom-cache="false" >
+        <section id="category-films" data-role="page" data-add-back-btn="true" data-dom-cache="false">
 			<header data-role="header" data-position="inline">
+                <a href="" data-icon="home" class="ui-btn-left"></a>
 				<h1></h1>
 			</header>
 			<article data-role="content" >
@@ -168,7 +169,7 @@
         </script>
         <script src="js/jquery-1.10.2.min.js"></script>
         <script>
-            $( document ).on( "mobileinit", function() {
+            $( document ).on("mobileinit", function() {
                 console.log("Received Event: mobileinit");
                 // Prevents all anchor click handling
                 $.mobile.linkBindingEnabled = false;
