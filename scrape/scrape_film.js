@@ -58,7 +58,19 @@ scrape(url, function(ctx) {
     var credits = $pSimpleData.next().text().trim();
     var summary = $pSimpleData.next().next().text().trim(); 
     var review = $placeContainer.find("place-container").children("p").text().trim();
-    var imdb = $placeContainer.find("ul.tainialink").find("li a").first().attr("href");
+    var links = $placeContainer.find("ul.tainialink li");
+    var imdb = links.find("a:contains('IMDB')").first();
+    if (imdb) {
+        imdb = imdb.attr("href");
+    }
+    var rottenTomatoes = links.find("a:contains('Rotten Tomatoes')").first();
+    if (rottenTomatoes) {
+        rottenTomatoes = rottenTomatoes.attr("href");
+    }
+    var officialSite = links.find("a:contains('Επίσημο website')").first();
+    if (officialSite) {
+        officialSite = officialSite.attr("href");
+    }
     var theatersUrl = $placeContainer.find("a.big-button").first().attr("href");
     var id = theatersUrl.match(/[\d]+$/)[0];
     var theaters = "";
@@ -78,6 +90,8 @@ scrape(url, function(ctx) {
         summary: summary,
         review: review,
         imdb: imdb,
+        rottenTomatoes: rottenTomatoes,
+        officialSite: officialSite,
         theatersUrl: theatersUrl,
         theaters: theaters
     };

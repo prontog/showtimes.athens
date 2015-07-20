@@ -147,8 +147,18 @@
         </script>
         <script id="film-template" type="text/template">                        			
             <div id="film-orig-title"><%= film.origTitle %></div>
+            <img id ="film-image" src="<%= film.image %>" alt="Poster not available"></img>
             <div id="film-year"><%= film.year %></div>
-            <div id="film-category"><%= film.category %></div>			
+            <div id="film-category"><%= film.category %></div>
+            <div id="film-type"><%= film.type %></div>
+            <div id="film-credits"><%= film.credits %></div>
+            <% if (film.imdb) { %>
+                <a id="film-imdb" href="<%= film.imdb %>">IMDB</a>
+            <% } %>            
+            <% if (film.officialSite) { %>
+                <a id="film-official-site" href="<%= film.officialSite %>">Επίσημο site</a>
+            <% } %>
+            <a id="film-athinorama" href="<%= film.url %>">αθηνόραμα</a>
         </script>
         <script id="category-template" type="text/template">
             <li><a href="#category-films/<%= category.name %>"> <%= category.name %> </a></li>
