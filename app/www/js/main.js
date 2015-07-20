@@ -157,6 +157,8 @@ var Film = Backbone.Model.extend({
         summary: "",
         review: "",
         imdb: "",
+        rottenTomatoes: "",
+        officialSite: "",
         theatersUrl: "",
         theaters: ""
     }
@@ -415,6 +417,7 @@ var FilmCollectionView = Backbone.View.extend({
         logger.log('Initializing FilmCollectionView');
         
         this.$ul = this.$('ul');
+        this.$header = this.$("header h1");
         this.listenTo(this.collection, 'all', this.render);
     },
     render: function() { 
@@ -427,8 +430,12 @@ var FilmCollectionView = Backbone.View.extend({
         });
         // Add new elements.
         this.$ul.html(items.join(""));
-                       
+        this.$ul.listview().listview('refresh');
+        
         return this;
+    },
+    header: function(title) {
+        this.$header.html(title);
     }
 });
 
@@ -583,8 +590,8 @@ var AppRouter = Backbone.Router.extend({
         var films = data.allFilms.where({ category: name });
         if (films) {            
             data.categoryFilms.reset(films);
-            views.categoryFilmsView.$el.find("header h1").first().html(name);
-                        
+            views.categoryFilmsView.header(name);        
+            
             $.mobile.pageContainer.pagecontainer("change", views.categoryFilmsView.$el, { reverse: false, changeHash: false });
         }
     },
