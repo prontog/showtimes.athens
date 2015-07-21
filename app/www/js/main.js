@@ -160,7 +160,7 @@ var Film = Backbone.Model.extend({
         rottenTomatoes: "",
         officialSite: "",
         theatersUrl: "",
-        theaters: ""
+        theaters: null
     }
 });
 
@@ -212,6 +212,17 @@ var ShowtimeCollection = Backbone.Collection.extend({
     comparator: 'area'
 });
 
+var Cinema = Backbone.Model.extend({
+    defaults: {
+        name: "",
+        area: "",
+        address: "",
+        phone: "",
+        map: "",
+        showtimes: null
+    }
+});
+
 var data = {
     // raw data
     updateInfo: null,
@@ -226,6 +237,7 @@ var data = {
     categoryFilms: null,
     film: null,
     areas: null,
+    cinema: null,
     init: function() {
         logger.log('Initalizing data');
         this.newFilms = new FilmCollection();
@@ -235,18 +247,67 @@ var data = {
         this.categoryFilms = new FilmCollection();
         this.film = new Film();
         this.areas = new AreaCollection();
+        this.cinema = new Cinema();
     },    
     categoriesFromFilms: function(films) {
+        if (!films) {            
+            logger.error("data.categoriesFromFilms: films cannot be null");
+            return null;
+        }
+            
         var categoriesRaw = _.chain(films).map(function(o) {
                 return o.category;
             }).uniq().value();
-        return _.map(categoriesRaw, function(c) { return { name: c };});
+        return _.map(categoriesRaw, function(c) { return { name: c };});        
     },
     areasFromShowtimes: function(showtimes) {
+        if (!showtimes) {
+            logger.error("data.areasFromShowtimes: showtimes cannot be null");
+            return null;
+        }
+        
         var areasRaw = _.chain(showtimes).map(function(o) {
                 return o.area;
             }).uniq().value();
-        return _.map(areasRaw, function(c) { return { name: c };});
+        return _.map(areasRaw, function(c) { return { name: c };});        
+    },
+    filmShowtimes: function(film) {
+        if (!film) {
+            logger.error("data.filmShowtimes: film cannot be null");
+            return null;
+        }
+        if (!this.showtimes) {
+            logger.error("data.filmShowtimes: this.showtimes cannot be null");
+            return null;
+        }
+        
+        return this.showtimes.where({ filmId: film.get("id") });                
+    },
+    cinemaByNameArea: function(name, area) {
+        if (!name) {
+            logger.error("data.cinemaByNameArea: name cannot be null");
+            return null;
+        }
+        if (!area) {
+            logger.error("data.cinemaByNameArea: area cannot be null");
+            return null;
+        }
+        if (!this.showtimes) {
+            logger.error("data.cinemaByNameArea: this.showtimes cannot be null");
+            return null;
+        }
+        
+        var cinemaShowtimes = this.showtimes.where({ cinemaName: name, area: area });        
+        var cinema = new Cinema();
+        if (cinemaShowtimes) {            
+            var s = cinemaShowtimes[0];
+            cinema.set('name', s.get('cinemaName'));
+            cinema.set('area', s.get('area'));
+            cinema.set('address', s.get('address'));
+            cinema.set('phone', s.get('phone'));
+            cinema.set('showtimes', cinemaShowtimes);
+        }
+        return cinema;
     },
     loadSingleObject: function(text) {
         var retObj = {};
@@ -482,16 +543,60 @@ var AreaCollectionView = Backbone.View.extend({
 });
 
 var FilmView = Backbone.View.extend({
-    filmTemplate: _.template($('#film-template').html()),
-    initialize: function(options) {   
-        this.$article = this.$('article');
+    filmDetailsTemplate: _.template($('#film-details-template').html()),
+    filmShowtimesTemplate: _.template($('#film-showtimes-template').html()),
+    initialize: function(options) {        
+        var $article = this.$('article');
+        this.$h1 = $article.prev('header').children('h1');
+        this.$filmDetails = $article.find('#film-details');
+        this.$filmShowtimes = $article.find('#film-showtimes');
         this.listenTo(this.model, 'all', this.render);
     },
     render: function() {
         logger.log('Rendering FilmView');
-        this.$article.prev('header').children('h1').html(this.model.get('title'));
-        this.$article.html(this.filmTemplate({ film: this.model.toJSON() }).trim());        
                 
+        var filmShowtimes = data.filmShowtimes(this.model);        
+        var film = this.model.toJSON();
+        film.theaters = _.map(filmShowtimes, function(s) { return s.toJSON(); });
+        
+        this.$h1.html(film.title);                
+        this.$filmDetails.html(this.filmDetailsTemplate({ film: film }).trim());        
+        this.$filmShowtimes.html(this.filmShowtimesTemplate({ film: film }).trim());
+        this.$filmShowtimes.listview().listview('refresh');        
+        
+        return this;
+    }
+});
+
+var CinemaView = Backbone.View.extend({
+    cinemaDetailsTemplate: _.template($('#cinema-details-template').html()),
+    cinemaShowtimesTemplate: _.template($('#cinema-showtimes-template').html()),
+    initialize: function(options) {
+        var $article = this.$('article');
+        this.$h1 = $article.prev('header').children('h1');
+        this.$cinemaDetails = $article.find('#cinema-details');
+        this.$cinemaShowtimes = $article.find('#cinema-showtimes');
+        this.listenTo(this.model, 'all', this.render);
+    },
+    render: function() {
+        logger.log('Rendering CinemaView');
+                
+        var cinema = this.model.toJSON();        
+        cinema.showtimes = _.map(this.model.get('showtimes'), function(s) { return s.toJSON(); });
+        // ToDo: This hack probably needs to be replaced.
+        cinema.showtimes = _.chain(cinema.showtimes)
+            .forEach(function(s) {
+                var film = data.allFilms.findWhere({ id: s.filmId });
+                s.filmTitle = film.get('title');
+            })
+            .sortBy(function(s) { return s.filmTitle; })
+            .value();
+        
+        this.$h1.html(cinema.title);                
+        this.$cinemaDetails.html(this.cinemaDetailsTemplate({ cinema: cinema }).trim());        
+        this.$cinemaShowtimes.html(this.cinemaShowtimesTemplate({ cinema: cinema }).trim());
+        this.$cinemaShowtimes.listview().listview('refresh');        
+        
         return this;
     }
 });
@@ -503,14 +608,16 @@ var views = {
     categoriesView: null,
     categoryFilmsView: null,
     areasView: null,
+    cinemaView: null,
     init: function() {
         logger.log('Initializing views');
-        views.newFilmsView = new FilmCollectionView({ el: $("#new"), collection: data.newFilms });
-        views.allFilmsView = new FilmCollectionView({ el: $("#all"), collection: data.allFilms });
-        views.filmView = new FilmView({ el: $("#film"), model: data.film });
-        views.categoriesView = new CategoryCollectionView({ el: $("#categories"), collection: data.categories });
-        views.categoryFilmsView = new FilmCollectionView({ el: $("#category-films"), collection: data.categoryFilms });
-        views.areasView = new AreaCollectionView({ el: $("#areas"), collection: data.areas });
+        this.newFilmsView = new FilmCollectionView({ el: $("#new"), collection: data.newFilms });
+        this.allFilmsView = new FilmCollectionView({ el: $("#all"), collection: data.allFilms });
+        this.filmView = new FilmView({ el: $("#film"), model: data.film });
+        this.categoriesView = new CategoryCollectionView({ el: $("#categories"), collection: data.categories });
+        this.categoryFilmsView = new FilmCollectionView({ el: $("#category-films"), collection: data.categoryFilms });
+        this.areasView = new AreaCollectionView({ el: $("#areas"), collection: data.areas });
+        this.cinemaView = new CinemaView({ el: $("#cinema"), model: data.cinema });
     },
     downloadError: function() {
         $("footer[data-role='footer']").find("h1").html("Η ενημέρωση απέτυχε");
@@ -566,6 +673,7 @@ var AppRouter = Backbone.Router.extend({
         "film/:id":    "film",       
         "category-films/:name": "category",
         "area/:name": "area",
+        "cinema/:name/:area": "cinema",
         "*path": "defaultHandler"
     },
     main: function() {
@@ -576,14 +684,14 @@ var AppRouter = Backbone.Router.extend({
         logger.log("AppRouter.film " + id);
                         
         var film = data.allFilms.findWhere({ id: id });
-        if (film) {            
-            // Set the model.
-            views.filmView.model.set(film.toJSON());                        
+        if (film) {
+            views.filmView.model.set(film.toJSON());
                 
             $.mobile.pageContainer.pagecontainer("change", views.filmView.$el, { reverse: false, changeHash: false });            
         }
     },
     category: function(name) {
+        name = decodeURIComponent(name);
         logger.log("AppRouter.category " + name);
         
         //var film = data.film(id);
@@ -596,8 +704,20 @@ var AppRouter = Backbone.Router.extend({
         }
     },
     area: function(name) {
+        name = decodeURIComponent(name);
         logger.log("AppRouter.area " + name);
             
+    },
+    cinema: function(name, area) {
+        name = decodeURIComponent(name);
+        area = decodeURIComponent(area);
+        logger.log("AppRouter.cinema " + name + ", " + area);
+        
+        var cinema = data.cinemaByNameArea(name, area);
+        if (cinema) {
+            views.cinemaView.model.set(cinema.toJSON());
+        }
+        $.mobile.pageContainer.pagecontainer("change", views.cinemaView.$el, { reverse: false, changeHash: false });
     },
     defaultHandler: function(path) {
         logger.log("AppRouter.default " + path);                
