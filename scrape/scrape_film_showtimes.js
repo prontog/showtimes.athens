@@ -61,11 +61,12 @@ scrape(url, function(ctx) {
                         
             var $p_price = $p_tech_info.next("p");
             
+            var price = "";
             if ($p_price.length) {
-                var price = $p_price.text().trim();
+                price = $p_price.text().trim();
             } 
             else {
-                var price = tech_info;
+                price = tech_info;
                 tech_info = "";
             }
             

@@ -55,6 +55,10 @@ scrape(url, function(ctx) {
     var category = $pSimpleData.find("span.category").text().trim();
     // Rated (PG13 etc.)
     var rated = $pSimpleData.find("span.rated").text().trim();
+    // Athinorama uses '-' for no rating.
+    if (rated === "-") {
+        rated = "";
+    }
     // Description. The description has the format: Year | FilmType | Duration
     var descriptionFields = _description.split("|");                    
     var year = descriptionFields[0].replace(category, "").trim();
