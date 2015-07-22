@@ -182,7 +182,8 @@ var CategoryCollection = Backbone.Collection.extend({
 
 var Area = Backbone.Model.extend({
     defaults: {
-        name: ""
+        name: "",
+        cinemas: null
     }
 });
 
@@ -190,7 +191,6 @@ var AreaCollection = Backbone.Collection.extend({
     model: Area,
     comparator: 'name'
 });
-
 
 var Showtime = Backbone.Model.extend({
     defaults: {
@@ -223,6 +223,11 @@ var Cinema = Backbone.Model.extend({
     }
 });
 
+var CinemaCollection = Backbone.Collection.extend({
+    model: Cinema,
+    comparator: 'name'
+});
+
 var data = {
     // raw data
     updateInfo: null,
@@ -232,44 +237,72 @@ var data = {
     // Backbone collections/models
     newFilms: null,
     allFilms: null,
+    film: null,
     showtimes: null,
     categories: null,
     categoryFilms: null,
-    film: null,
-    areas: null,
+    allAreas: null,
+    area: null,
+    allCinemas: null,
     cinema: null,
     init: function() {
         logger.log('Initalizing data');
         this.newFilms = new FilmCollection();
         this.allFilms = new FilmCollection();
+        this.film = new Film();
         this.showtimes = new ShowtimeCollection();
         this.categories = new CategoryCollection();
         this.categoryFilms = new FilmCollection();
-        this.film = new Film();
-        this.areas = new AreaCollection();
+        this.allAreas = new AreaCollection();
+        this.area = new Area();
+        this.allCinemas = new CinemaCollection();
         this.cinema = new Cinema();
     },
-    categoriesFromFilms: function(films) {
-        if (!films) {
-            logger.error("data.categoriesFromFilms: films cannot be null");
+    setAllFilms: function(filmsRaw) {
+        if (!filmsRaw) {
+            logger.error("data.setAllFilms: filmsRaw cannot be null");
             return null;
         }
 
-        var categoriesRaw = _.chain(films).map(function(o) {
-                return o.category;
-            }).uniq().value();
-        return _.map(categoriesRaw, function(c) { return { name: c };});
+        this.allFilms.reset(filmsRaw);
+        var categoriesRaw = _.chain(filmsRaw)
+                             .map(function(o) { return o.category; })
+                             .uniq()
+                             .map(function(c) { return { name: c }; })
+                             .value();
+        this.categories.reset(categoriesRaw);
     },
-    areasFromShowtimes: function(showtimes) {
-        if (!showtimes) {
-            logger.error("data.areasFromShowtimes: showtimes cannot be null");
-            return null;
+    setShowtimes: function(showtimesRaw) {
+        if (!showtimesRaw) {
+            logger.error("data.setShowtimes: showtimesRaw cannot be null");
+            return;
         }
 
-        var areasRaw = _.chain(showtimes).map(function(o) {
-                return o.area;
-            }).uniq().value();
-        return _.map(areasRaw, function(c) { return { name: c };});
+        // First reset the showtimes.
+        this.showtimes.reset(showtimesRaw);
+        // Then reset the cinemas.
+        var cinemaShowtimes = this.showtimes.groupBy(function(s) { return s.get('area') + "_" + s.get('cinemaName'); });
+        var cinemasRaw = _.map(cinemaShowtimes, function(cs) {
+            var cinema = new Cinema();
+            var s = cs[0];
+            cinema.set('name', s.get('cinemaName'));
+            cinema.set('area', s.get('area'));
+            cinema.set('address', s.get('address'));
+            cinema.set('phone', s.get('phone'));
+            cinema.set('showtimes', cs);
+            return cinema;
+        });
+        this.allCinemas.reset(cinemasRaw);
+
+        // Finally reset the areas.
+        var areaCinemas = this.allCinemas.groupBy(function(c) { return c.get('area'); });
+        var areasRaw = _.map(_.pairs(areaCinemas), function(p) {
+            return { name: p[0],
+                     cinemas: p[1]
+            };
+        });
+
+        this.allAreas.reset(areasRaw);
     },
     filmShowtimes: function(film) {
         if (!film) {
@@ -283,31 +316,21 @@ var data = {
 
         return this.showtimes.where({ filmId: film.get("id") });
     },
-    cinemaByNameArea: function(name, area) {
+    findCinema: function(name, area) {
         if (!name) {
-            logger.error("data.cinemaByNameArea: name cannot be null");
+            logger.error("data.findCinema: name cannot be null");
             return null;
         }
         if (!area) {
-            logger.error("data.cinemaByNameArea: area cannot be null");
+            logger.error("data.findCinema: area cannot be null");
             return null;
         }
         if (!this.showtimes) {
-            logger.error("data.cinemaByNameArea: this.showtimes cannot be null");
+            logger.error("data.findCinema: this.showtimes cannot be null");
             return null;
         }
 
-        var cinemaShowtimes = this.showtimes.where({ cinemaName: name, area: area });
-        var cinema = new Cinema();
-        if (cinemaShowtimes) {
-            var s = cinemaShowtimes[0];
-            cinema.set('name', s.get('cinemaName'));
-            cinema.set('area', s.get('area'));
-            cinema.set('address', s.get('address'));
-            cinema.set('phone', s.get('phone'));
-            cinema.set('showtimes', cinemaShowtimes);
-        }
-        return cinema;
+        return this.allCinemas.findWhere({ name: name, area: area });
     },
     loadSingleObject: function(text) {
         var retObj = {};
@@ -592,10 +615,38 @@ var CinemaView = Backbone.View.extend({
             .sortBy(function(s) { return s.filmTitle; })
             .value();
 
-        this.$h1.html(cinema.title);
+        this.$h1.html(cinema.name);
         this.$cinemaDetails.html(this.cinemaDetailsTemplate({ cinema: cinema }).trim());
         this.$cinemaShowtimes.html(this.cinemaShowtimesTemplate({ cinema: cinema }).trim());
         this.$cinemaShowtimes.listview().listview('refresh');
+
+        return this;
+    }
+});
+
+var AreaView = Backbone.View.extend({
+    cinemaCollectionTemplate: _.template($('#cinema-collection-template').html()),
+    initialize: function(options) {
+        var $article = this.$('article');
+        this.$h1 = $article.prev('header').children('h1');
+        this.$ul = $article.find('ul');
+        this.listenTo(this.model, 'all', this.render);
+    },
+    render: function() {
+        logger.log('Rendering AreaView');
+
+        var area = this.model.toJSON();
+        this.$h1.html(area.name);
+
+        var items = [];
+        var cinemaCollectionTemplate = this.cinemaCollectionTemplate;
+        area.cinemas.forEach(function(c) {
+            items.push(cinemaCollectionTemplate({ cinema: c.toJSON() }).trim());
+        });
+
+        // Add new elements.
+        this.$ul.html(items.join(""));
+        this.$ul.listview().listview('refresh');
 
         return this;
     }
@@ -607,16 +658,18 @@ var views = {
     filmView: null,
     categoriesView: null,
     categoryFilmsView: null,
-    areasView: null,
+    allAreasView: null,
     cinemaView: null,
+    areaView: null,
     init: function() {
         logger.log('Initializing views');
-        this.newFilmsView = new FilmCollectionView({ el: $("#new"), collection: data.newFilms });
-        this.allFilmsView = new FilmCollectionView({ el: $("#all"), collection: data.allFilms });
+        this.newFilmsView = new FilmCollectionView({ el: $("#new-films"), collection: data.newFilms });
+        this.allFilmsView = new FilmCollectionView({ el: $("#all-films"), collection: data.allFilms });
         this.filmView = new FilmView({ el: $("#film"), model: data.film });
         this.categoriesView = new CategoryCollectionView({ el: $("#categories"), collection: data.categories });
         this.categoryFilmsView = new FilmCollectionView({ el: $("#category-films"), collection: data.categoryFilms });
-        this.areasView = new AreaCollectionView({ el: $("#areas"), collection: data.areas });
+        this.allAreasView = new AreaCollectionView({ el: $("#all-areas"), collection: data.allAreas });
+        this.areaView = new AreaView({ el: $("#area"), model: data.area });
         this.cinemaView = new CinemaView({ el: $("#cinema"), model: data.cinema });
     },
     downloadError: function() {
@@ -631,12 +684,10 @@ var views = {
             data.newFilms.reset(films);
         });
         $.subscribe(events.ALL_FILMS_LOADED, function(e, films) {
-            data.allFilms.reset(films);
-            data.categories.reset(data.categoriesFromFilms(films));
+            data.setAllFilms(films);
         });
         $.subscribe(events.SHOWTIMES_LOADED, function(e, showtimes) {
-            data.showtimes.reset(showtimes);
-            data.areas.reset(data.areasFromShowtimes(showtimes));
+            data.setShowtimes(showtimes);
         });
     }
 };
@@ -707,13 +758,18 @@ var AppRouter = Backbone.Router.extend({
         name = decodeURIComponent(name);
         logger.log("AppRouter.area " + name);
 
+        var area = data.allAreas.findWhere({ name: name });
+        if (area) {
+            views.areaView.model.set(area.toJSON());
+        }
+        $.mobile.pageContainer.pagecontainer("change", views.areaView.$el, { reverse: false, changeHash: false });
     },
     cinema: function(name, area) {
         name = decodeURIComponent(name);
         area = decodeURIComponent(area);
         logger.log("AppRouter.cinema " + name + ", " + area);
 
-        var cinema = data.cinemaByNameArea(name, area);
+        var cinema = data.findCinema(name, area);
         if (cinema) {
             views.cinemaView.model.set(cinema.toJSON());
         }
