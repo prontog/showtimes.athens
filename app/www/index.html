@@ -17,7 +17,7 @@
     specific language governing permissions and limitations
     under the License.
 -->
-<html>
+<html manifest="http://showtimes.ronto.net/showtimes.appcache">
     <head>
         <meta charset="utf-8" />
         <meta name="format-detection" content="telephone=no" />
@@ -246,27 +246,7 @@
         <script id="cinema-collection-template" type="text/template">
             <li><a href="#cinema/<%- encodeURIComponent(cinema.name) %>/<%- encodeURIComponent(cinema.area) %>"> <%= cinema.name %> </a></li>
         </script>
-        <script src="js/jquery-1.10.2.min.js"></script>
-        <script>
-            $( document ).on("mobileinit", function() {
-                console.log("Received Event: mobileinit");
-                // Prevents all anchor click handling
-                $.mobile.linkBindingEnabled = false;
-                // Disabling this will prevent jQuery Mobile from handling hash changes
-                $.mobile.hashListeningEnabled = false;          
-                //$.mobile.ajaxEnabled = false;
-                //$.mobile.pushStateEnabled = false;
-                //$.mobile.changePage.defaults.changeHash = false;            
-            });
-        </script>
-		<script src="js/jquery.mobile-1.4.5.min.js"></script>
-        <script src="js/jquery.ba-tinypubsub.min.js"></script>
-        <script src="js/underscore-min.js"></script>
         <script type="text/javascript" src="cordova.js"></script>
-        <script src="js/backbone-min.js"></script>        
-        <script src="js/main.js"></script>
-        <script type="text/javascript">
-            app.initialize();
-        </script>
+        <script data-main="js/main" src="js/require-min.js"></script>
     </body>
 </html>
