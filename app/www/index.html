@@ -34,7 +34,7 @@
     <body>
         <section id="main" data-role="page" data-dom-cache="true" >
 			<header data-role="header" data-position="inline">
-				<h1>Showtimes.Athens</h1>
+				<h1>Showtimes<br>Athens</h1>                
                 <a href="#settings" data-icon="gear" class="ui-btn-right"></a>
 			</header>
 			<article data-role="content" >
@@ -64,6 +64,18 @@
 				<h1></h1>
 			</footer>
 		</section>
+        <section id="about" data-role="page" data-add-back-btn="true" data-dom-cache="true">
+            <header data-role="header" data-position="inline">
+                <a href="" data-icon="home" class="ui-btn-left"></a>
+				<h1>Σχετικά με το<br>Showtimes<br>Athens</h1>
+			</header>
+			<article data-role="content">				
+                Ο κώδικας βρίσκεται στο <a href="https://github.com/prontog/showtimes.athens">GitHub</a>.
+			</article>
+            <footer data-role="footer" data-position="inline">
+				<h1></h1>
+			</footer>
+        </section>
         <section id="new-films" data-role="page" data-add-back-btn="true" data-dom-cache="false" >
 			<header data-role="header" data-position="inline">
                 <a href="" data-icon="home" class="ui-btn-left"></a>
@@ -106,9 +118,10 @@
         <section id="category-films" data-role="page" data-add-back-btn="true" data-dom-cache="false">
 			<header data-role="header" data-position="inline">
                 <a href="" data-icon="home" class="ui-btn-left"></a>
-				<h1></h1>
+				<h1>Showtimes<br>Athens</h1>
 			</header>
 			<article data-role="content" >
+                <h4></h4>
 				<ul data-role="listview" data-inset="true" data-filter="true">
                 </ul>
 			</article>
@@ -132,7 +145,7 @@
         <section id="film" data-role="page" >
             <header data-role="header" data-position="inline">
                 <a href="" data-icon="home" class="ui-btn-left"></a>
-                <h1></h1>
+                <h1>Showtimes<br>Athens</h1>
 			</header>
             <article data-role="content" >
                 <div id="film-details">
@@ -154,7 +167,7 @@
         <section id="cinema" data-role="page">
             <header data-role="header" data-position="inline">
                 <a href="" data-icon="home" class="ui-btn-left"></a>
-				<h1></h1>
+				<h1>Showtimes<br>Athens</h1>
 			</header>
 			<article data-role="content" >
                 <div id="cinema-details">
@@ -176,9 +189,10 @@
         <section id="area" data-role="page">
             <header data-role="header" data-position="inline">
                 <a href="" data-icon="home" class="ui-btn-left"></a>
-				<h1></h1>
+				<h1>Showtimes<br>Athens</h1>                
 			</header>
             <article>
+                <h4></h4>
                 <ul data-role="listview" data-inset="true" data-filter="true">
                 </ul>
             </article>
@@ -189,7 +203,8 @@
         <script id="film-collection-template" type="text/template">
             <li><a href="#film/<%- film.id %>"> <%= film.title %> </a></li>
         </script>
-        <script id="film-details-template" type="text/template">         
+        <script id="film-details-template" type="text/template">
+            <div id="film-title"><%= film.title %></div>
             <img id ="film-image" src="<%= film.image %>" alt="Poster not available"></img>
             <div id="film-orig-title"><%= film.origTitle %></div>
             <div id="film-details"><%= film.category %>, <%= film.year %>, <%= film.filmType %></div>
@@ -227,7 +242,7 @@
             <li><a href="#area/<%- encodeURIComponent(area.name) %>"> <%= area.name %> </a></li>
         </script>
         <script id="cinema-details-template" type="text/template">            
-            <div><%= cinema.name %></div>
+            <h4><%= cinema.name %></h4>
             <div><%= cinema.area %></div>
             <div><%= cinema.address %></div>
             <div><%= cinema.phone %></div>
