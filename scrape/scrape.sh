@@ -34,13 +34,13 @@ function scrape_films
 function clean_up
 {
     echo Cleaning up...
-    if [ -d $DIR_IMAGES ]
+    if [[ -d $DIR_IMAGES ]]
     then
         rm -vf $DIR_IMAGES/*
         rmdir $DIR_IMAGES
     fi
     
-    if [ -d $DIR_TMP ]
+    if [[ -d $DIR_TMP ]]
     then
         rm -vf $DIR_TMP/*
     fi
@@ -50,14 +50,14 @@ function clean_up
 # create the dir it exits. 
 function prepare_dir
 {
-    if [ ! -d $1 ]
+    if [[ ! -d $1 ]]
     then
         if ! mkdir $1 ; then exit 1; fi
     fi           
 }
 
 # If the temp dir exists then clean it up. Otherwise create it.
-if [ -d $DIR_TMP ] 
+if [[ -d $DIR_TMP ]]
 then 
     clean_up
 else
@@ -98,7 +98,10 @@ do
     # Download image.
     FILM_URL=http://www.athinorama.gr/lmnts/events/cinema/${FILM_ID}/Poster.jpg
     echo downloading $FILM_URL
-    curl -L $FILM_URL > ${DIR_IMAGES}/${FILM_ID}.jpg
+    IMG_FILE=${DIR_IMAGES}/${FILM_ID}.jpg
+    curl -L $FILM_URL > $IMG_FILE
+    # Resize image to 170x250.
+    convert.exe $IMG_FILE -strip -resize 170x250 $IMG_FILE
     echo scraping showtimes ${URL_CINEMA}${SHOWTIMES_URL}
     phantomjs scrape_film_showtimes.js $FILM_ID ${URL_CINEMA}${SHOWTIMES_URL} >> $FN_SHOWTIMES    
 done < $FN_FILM_INFO
