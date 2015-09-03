@@ -17,14 +17,6 @@
                             "count": 1
                         },
                         {
-                            "xml": "<feature name=\"File\"><param name=\"android-package\" value=\"org.apache.cordova.file.FileUtils\" /><param name=\"onload\" value=\"true\" /></feature>",
-                            "count": 1
-                        },
-                        {
-                            "xml": "<feature name=\"FileTransfer\"><param name=\"android-package\" value=\"org.apache.cordova.filetransfer.FileTransfer\" /></feature>",
-                            "count": 1
-                        },
-                        {
                             "xml": "<feature name=\"Whitelist\"><param name=\"android-package\" value=\"org.apache.cordova.whitelist.WhitelistPlugin\" /><param name=\"onload\" value=\"true\" /></feature>",
                             "count": 1
                         },
@@ -37,12 +29,7 @@
             },
             "AndroidManifest.xml": {
                 "parents": {
-                    "/*": [
-                        {
-                            "xml": "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\" />",
-                            "count": 2
-                        }
-                    ]
+                    "/*": []
                 }
             }
         }
@@ -55,12 +42,6 @@
             "PACKAGE_NAME": "net.ronto.showtimes.athens"
         },
         "cordova-plugin-device": {
-            "PACKAGE_NAME": "net.ronto.showtimes.athens"
-        },
-        "cordova-plugin-file": {
-            "PACKAGE_NAME": "net.ronto.showtimes.athens"
-        },
-        "cordova-plugin-file-transfer": {
             "PACKAGE_NAME": "net.ronto.showtimes.athens"
         },
         "cordova-plugin-whitelist": {

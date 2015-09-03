@@ -27,12 +27,6 @@
         "cordova-plugin-device": {
             "PACKAGE_NAME": "net.ronto.showtimes.athens"
         },
-        "cordova-plugin-file": {
-            "PACKAGE_NAME": "net.ronto.showtimes.athens"
-        },
-        "cordova-plugin-file-transfer": {
-            "PACKAGE_NAME": "net.ronto.showtimes.athens"
-        },
         "cordova-plugin-whitelist": {
             "PACKAGE_NAME": "net.ronto.showtimes.athens"
         },

@@ -1,5 +1,5 @@
 /*jslint nomen:true, vars:true, devel:true, browser:true, white:true */
-/*globals define:true, FileError:true, LocalFileSystem:true, FileReader:true, FileTransfer:true, cordova: true */
+/*globals define:true, cordova: true */
 
 define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], function($, Mobile, Backbone, _, TinyPubSub) {
     "use strict";
@@ -487,99 +487,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             $("footer[data-role='footer']").find("h1").html("Η ενημέρωση απέτυχε");
         }
     };        
-    
-    /*******************************************************************************/
-    /**************** FileSystem ***************************************************/
-    var appFS= {
-        SIZE: 5 * 1024 * 1024,
-        _fs: null,
-        root: null,
-        // Add a description to the error object.This description
-        // is for the user.
-        enrichError: function(e) {
-            var whatHappened = "";
-
-            switch (e.code) {
-            case FileError.QUOTA_EXCEEDED_ERR:
-                whatHappened = "QUOTA_EXCEEDED_ERR";
-                break;
-            case FileError.NOT_FOUND_ERR:
-                whatHappened = "NOT_FOUND_ERR";
-                break;
-            case FileError.SECURITY_ERR:
-                whatHappened = "SECURITY_ERR";
-                break;
-            case FileError.INVALID_MODIFICATION_ERR:
-                whatHappened = "INVALID_MODIFICATION_ERR";
-                break;
-            case FileError.INVALID_STATE_ERR:
-                whatHappened = "INVALID_STATE_ERR";
-                break;
-            default:
-                whatHappened = "Unknown Error";
-                break;
-            }
-
-            var enriched = _.clone(e);
-            enriched.whatHappened = whatHappened;
-            return enriched;
-        },
-        // Simple FS error handler that adds a description of what happened
-        // and logs the error.
-        defaultErrorHandler: function(e) {
-            if (e) {
-                logger.error(JSON.stringify(appFS.enrichError(e), ["name", "message", "whatHappened"]));
-            }
-        },
-        // Wraps an error handler function so that the default hanlder is also called.
-        wrapErrorHandler: function(someHandler) {
-            return function() {
-                appFS.defaultErrorHandler();
-                if (someHandler) {
-                    someHandler();
-                }
-            };
-        },
-        // Initiate the filesystem.
-        init: function (callback) {
-            logger.log("appFS.init");
-            window.requestFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
-
-            if (window.requestFileSystem) {
-                window.requestFileSystem(LocalFileSystem.PERSISTENT, appFS.SIZE, function(filesystem) {
-                    logger.log("window.requestFileSystem: File system initialized");
-                    appFS._fs = filesystem;
-                    appFS.root = appFS._fs.root;
-                    // Notify subscribers that the file system is ready.
-                    $.publish(events.FILE_SYSTEM_READY);
-                }, appFS.defaultErrorHandler);
-            }
-        },
-        // Read the contents of a file to an array.
-        readFile: function(fileURL, success, error) {
-            logger.log("appFS.readFile: " + fileURL);
-            appFS.root.getFile(fileURL, { create: false }, function(fileEntry) {
-                logger.log("appFS.root.getFile: " + fileURL);
-                // Get a File object representing the file,
-                // then use FileReader to read its contents.
-                fileEntry.file(function(file) {
-                    logger.log("fileEntry.file: " + fileURL);
-
-                    var reader = new FileReader();
-                    reader.onloadend = function(e) {
-                        if (success) {
-                            // 'this' is the reader and the result is
-                            // the file text.
-                            success(this.result);
-                        }
-                    };
-
-                    reader.readAsText(file);
-                }, appFS.defaultErrorHandler);
-            }, appFS.wrapErrorHandler(error));
-        }
-    };
-    
+        
     /*******************************************************************************/
     /**************** DataManager **************************************************/
     
@@ -592,58 +500,65 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
         FILE_ALL_FILMS: "all_films.json",
         FILE_SHOWTIMES: "showtimes.json",
         FILE_UPDATE_INFO: "update_info.json",
-        download: function(url, fileURL, success, error) {
-            logger.log("dataManager.download: " + fileURL);
-            var fileTransfer = new FileTransfer();
+        downloadToStorage: function(url, entry, success, error) {
+            logger.log("dataManager.downloadToStorage: " + entry);
+            
             var uri = encodeURI(url);
 
-            fileTransfer.download(
-                uri,
-                fileURL,
-                function(entry) {
-                    logger.log("fileTransfer.download: " + entry.fullPath + " download completed");
-                    if (success) {
-                        success(entry.fullPath);
-                    }
-                },
-                function(e) {
-                    logger.error("fileTransfer.download: " + JSON.stringify(e));
-                    if (error) {
-                        error();
-                    }
+            $.get(uri).done(function(data) {
+                logger.log("$.get: " + url + " download completed");
+                
+                window.localStorage.setItem(entry, data);
+                
+                if (success) {
+                    success(entry);
                 }
-            );
+            }).fail(function(e) {
+                logger.error("fileTransfer.downloadToStorage: " + JSON.stringify(e));
+                if (error) {
+                    error();
+                }
+            });
         },
-        loadFromFile: function(filename, to, success, error) {
-            logger.log("dataManager.loadFromFile: " + filename);
-            appFS.readFile(filename, function(text) {
-                if ($.isArray(to)) {
-                    var allLines = text.split("\n");
-                    logger.log(filename + ", number of lines:" + allLines.length);
+        loadFromStorage: function(entry, to, success, error) {            
+            logger.log("dataManager.loadFromStorage: " + entry);
+            if ( ! $.isArray(to)) {
+                logger.error("dataManager.loadFromStorage: Invalid argument type. 'to' is not an array.");
+            }
+            
+            var text = window.localStorage.getItem(entry);
+            if (text) {
+                logger.log("dataManager.loadFromStorage: " + entry + " was found in localstorage.");
+                
+                var allLines = text.split("\n");
+                logger.log(entry + ", number of lines:" + allLines.length);
 
-                    // Clear the array.
-                    to.length = 0;
-                    // Parse each line and add to the array.
-                    _.forEach(allLines, function(line) {
-                        if (line) {
-                            to.push(data.loadSingleObject(line));
-                        }
-                    });
-
-                    if (success) {
-                        success(filename);
+                // Clear the array.
+                to.length = 0;
+                // Parse each line and add to the array.
+                _.forEach(allLines, function(line) {
+                    if (line) {
+                        to.push(data.loadSingleObject(line));
                     }
+                });
+
+                if (success) {
+                    success(entry);
                 }
-                else {
-                    logger.error("dataManager.loadFromFile: Invalid argument type. 'to' is not an array.");
+            }
+            else {
+                logger.log("dataManager.loadFromStorage: " + entry + " could not be found in localstorage.");
+                
+                if (error) {
+                    error();
                 }
-            }, error);
+            }            
         },
         downloadUpdateInfo: function() {
             logger.log("dataManager.downloadUpdateInfo");
             
-            dataManager.download(dataManager.URL_UPDATE_INFO,
-                          appFS.root.toURL() + dataManager.FILE_UPDATE_INFO,
+            dataManager.downloadToStorage(dataManager.URL_UPDATE_INFO,
+                          dataManager.FILE_UPDATE_INFO,
                           function(filename) {
                             $.publish(events.UPDATE_INFO_AVAILABLE, [filename, true]);
                           },
@@ -652,9 +567,9 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
         loadUpdateInfo: function(error, downloaded) {
             logger.log("dataManager.loadUpdateInfo: downloaded=" + (downloaded ? "true" : "false"));
             
-            // This is a hack, loadFromFile can only load to an array.
+            // This is a hack, loadFromStorage can only load to an array.
             var dataContainer = [];
-            dataManager.loadFromFile(dataManager.FILE_UPDATE_INFO, dataContainer, function() {
+            dataManager.loadFromStorage(dataManager.FILE_UPDATE_INFO, dataContainer, function() {
                 var updateInfoRaw = dataContainer[0];                
                 // This is to avoid back to back downloads in the case where the server is not updated itself.
                 //if (downloaded) {
@@ -672,35 +587,42 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
                 data.setUpdateInfo(updateInfoRaw);
             }, error);
         },
+        init: function() {
+            logger.log("dataManager.init");
+            // Notify that the update-info file is available. If the loading (subscribed
+            // to this events) fails, the file re-downloaded one more time. This is for the
+            // case where the update-info file does not exist on the local file system.
+            $.publish(events.UPDATE_INFO_AVAILABLE, [dataManager.downloadUpdateInfo, false]);
+        },
         bindEvents: function() {
             logger.log("dataManager.bindEvents");
-
-            $.subscribe(events.FILE_SYSTEM_READY, function() {
-                // Notify that the update-info file is available. If the loading (subscribed
-                // to this events) fails, the file re-downloaded one more time. This is for the
-                // case where the update-info file does not exist on the local file system.
-                $.publish(events.UPDATE_INFO_AVAILABLE, [dataManager.downloadUpdateInfo, false]);
-            });
-            $.subscribe(events.STALE_DATA, dataManager.update);
-            $.subscribe(events.FRESH_DATA, dataManager.load);
             
-            $.subscribe(events.DOWNLOADING_COMPLETED, data.exchange);
+            $.subscribe(events.STALE_DATA, function(e) {
+                dataManager.update();
+            });
+            $.subscribe(events.FRESH_DATA, function(e) {
+                dataManager.load();
+            });
+            
+            $.subscribe(events.DOWNLOADING_COMPLETED, function(e) {
+                data.exchange();
+            });
 
             $.subscribe(events.UPDATE_INFO_AVAILABLE, function(e, error, downloaded) {                
                 dataManager.loadUpdateInfo(error, downloaded);
             });
             $.subscribe(events.NEW_ARRIVALS_AVAILABLE, function(e, filename) {
-                dataManager.loadFromFile(filename, data.newFilmsRaw, function() {                    
+                dataManager.loadFromStorage(filename, data.newFilmsRaw, function() {                    
                     data.newFilms.reset(data.newFilmsRaw);
                 });
             });
             $.subscribe(events.ALL_FILMS_AVAILABLE, function(e, filename) {
-                dataManager.loadFromFile(filename, data.allFilmsRaw, function() {                    
+                dataManager.loadFromStorage(filename, data.allFilmsRaw, function() {                    
                     data.setAllFilms(data.allFilmsRaw);
                 });
             });
             $.subscribe(events.SHOWTIMES_AVAILABLE, function(e, filename) {
-                dataManager.loadFromFile(filename, data.showtimesRaw, function() {                    
+                dataManager.loadFromStorage(filename, data.showtimesRaw, function() {                    
                     data.setShowtimes(data.showtimesRaw);
                 });
             });            
@@ -714,30 +636,28 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             $.publish(events.SHOWTIMES_AVAILABLE, [dataManager.FILE_SHOWTIMES]);
         },        
         update: function(all) {
-            logger.log("dataManager.update");
-
-            var rootURL = appFS.root.toURL();            
+            logger.log("dataManager.update");                        
 
             if (all) {
                 dataManager.downloadUpdateInfo();
             }
             
-            dataManager.download(dataManager.URL_NEW_ARRIVALS,
-                          rootURL + dataManager.FILE_NEW_ARRIVALS,
+            dataManager.downloadToStorage(dataManager.URL_NEW_ARRIVALS,
+                          dataManager.FILE_NEW_ARRIVALS,
                           function(filename) {
                             $.publish(events.NEW_ARRIVALS_AVAILABLE, [filename]);
                           },
                           views.downloadError);
 
-            dataManager.download(dataManager.URL_ALL_FILMS,
-                          rootURL + dataManager.FILE_ALL_FILMS,
+            dataManager.downloadToStorage(dataManager.URL_ALL_FILMS,
+                          dataManager.FILE_ALL_FILMS,
                           function(filename) {
                             $.publish(events.ALL_FILMS_AVAILABLE, [filename]);
                           },
                           views.downloadError);
 
-            dataManager.download(dataManager.URL_SHOWTIMES,
-                          rootURL + dataManager.FILE_SHOWTIMES,
+            dataManager.downloadToStorage(dataManager.URL_SHOWTIMES,
+                          dataManager.FILE_SHOWTIMES,
                           function(filename) {
                             $.publish(events.SHOWTIMES_AVAILABLE, [filename]);
                           },
@@ -777,8 +697,8 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             //logger.log("dataManager.needsUpdate: " + diffDate);
             var diff = {
                     diff: diffDate.getTime(),
-                    days: diffDate.getUTCDate(),
-                    months: (diffDate.getUTCMonth() + 1),
+                    days: diffDate.getUTCDate() - 1,
+                    months: diffDate.getUTCMonth(),
                     years: diffDate.getFullYear() - 1970
             };
 
@@ -888,6 +808,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
 
             this.bindEvents();
 
+            dataManager.init();
             // For browser debugging.
             //dataManager.loadRawData();
         },
@@ -897,8 +818,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
         // 'load', 'deviceready', 'offline', and 'online'.
         bindEvents: function() {
             logger.log("app.bindEvents");
-            document.addEventListener('deviceready', this.onDeviceReady, false);
-            window.addEventListener('filePluginIsReady', this.onfilePluginIsReady, false);
+            document.addEventListener('deviceready', this.onDeviceReady, false);            
 
             dataManager.bindEvents();            
         },
@@ -907,25 +827,11 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
         // Note that the scope of 'this' is the event.
         onDeviceReady: function() {
             logger.log('Received Event: deviceready');
-
-            app.router = new AppRouter();
-
-            if (cordova.platformId !== "browser") {
-                appFS.init();
-            }
+                        
+            app.router = new AppRouter();            
 
             // Use InAppBrowser plugin to open URLs on system browser.
             window.open = cordova.InAppBrowser.open;
-        },
-        // filePluginIsReady Event Handler
-        //
-        // Note that the scope of 'this' is the event.
-        onfilePluginIsReady: function() {
-            logger.log('Received Event: filePluginIsReady');
-
-            if (cordova.platformId === "browser") {
-                appFS.init();
-            }
         }
     };
     
