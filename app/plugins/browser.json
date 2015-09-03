@@ -35,6 +35,9 @@
         },
         "cordova-plugin-whitelist": {
             "PACKAGE_NAME": "net.ronto.showtimes.athens"
+        },
+        "cordova-plugin-inappbrowser": {
+            "PACKAGE_NAME": "net.ronto.showtimes.athens"
         }
     },
     "dependent_plugins": {}

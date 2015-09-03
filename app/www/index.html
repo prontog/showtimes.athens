@@ -214,12 +214,12 @@
             <div id="film-duration"><%= film.duration %></div>
             <div id="film-credits"><%= film.credits %></div>
             <% if (film.imdb) { %>
-                <a id="film-imdb" href="<%= film.imdb %>">IMDB</a>
+                <a id="film-imdb" href="<%= film.imdb %>" target="_system">IMDB</a>
             <% } %>            
             <% if (film.officialSite) { %>
-                <a id="film-official-site" href="<%= film.officialSite %>">Επίσημο site</a>
+                <a id="film-official-site" href="<%= film.officialSite %>" target="_system">Επίσημο site</a>
             <% } %>
-            <a id="film-athinorama" href="<%= film.url %>">αθηνόραμα</a>            
+            <a id="film-athinorama" href="<%= film.url %>" target="_system">αθηνόραμα</a>
         </script>
         <script id="film-showtimes-template" type="text/template">
             <% for (var i in film.theaters) { 

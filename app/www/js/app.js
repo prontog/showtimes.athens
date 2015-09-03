@@ -913,13 +913,17 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             if (cordova.platformId !== "browser") {
                 appFS.init();
             }
+
+            // Use InAppBrowser plugin to open URLs on system browser.
+            window.open = cordova.InAppBrowser.open;
         },
         // filePluginIsReady Event Handler
         //
         // Note that the scope of 'this' is the event.
         onfilePluginIsReady: function() {
+            logger.log('Received Event: filePluginIsReady');
+
             if (cordova.platformId === "browser") {
-                logger.log('Received Event: filePluginIsReady');
                 appFS.init();
             }
         }
@@ -928,7 +932,9 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
     return {
         app: app,
         data: data,
+        dataManager: dataManager,
         views: views,
-        logger: logger        
+        logger: logger,
+        events: events
     };
 });
