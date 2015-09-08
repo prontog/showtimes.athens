@@ -21,28 +21,23 @@
 
 [![Build Status](https://travis-ci.org/apache/cordova-plugin-console.svg)](https://travis-ci.org/apache/cordova-plugin-console)
 
-This plugin is meant to ensure that console.log() is as useful as it can be.
-It adds additional function for iOS, Ubuntu, Windows Phone 8, and Windows. If
-you are happy with how console.log() works for you, then you probably
-don't need this plugin.
+Questo plugin è intesa a garantire che console.log() è tanto utile quanto può essere. Aggiunge una funzione aggiuntiva per iOS, Ubuntu, Windows Phone 8 e Windows. Se sei soddisfatto di come console.log() funziona per voi, quindi probabilmente non è necessario questo plugin.
 
-This plugin defines a global `console` object.
+Questo plugin definisce un oggetto globale `console`.
 
-Although the object is in the global scope, features provided by this plugin
-are not available until after the `deviceready` event.
+Sebbene l'oggetto sia in ambito globale, funzionalità fornite da questo plugin non sono disponibili fino a dopo l'evento `deviceready`.
 
     document.addEventListener("deviceready", onDeviceReady, false);
     function onDeviceReady() {
         console.log("console.log works well");
     }
+    
 
-## Installation
+## Installazione
 
     cordova plugin add cordova-plugin-console
+    
 
-### Android Quirks
+### Stranezze Android
 
-On some platforms other than Android, console.log() will act on multiple
-arguments, such as console.log("1", "2", "3"). However, Android will act only
-on the first argument. Subsequent arguments to console.log() will be ignored.
-This plugin is not the cause of that, it is a limitation of Android itself.
+Su alcune piattaforme diverse da Android, console.log() agirà su più argomenti, come ad esempio console ("1", "2", "3"). Tuttavia, Android agirà solo sul primo argomento. Argomenti successivi a console.log() verranno ignorati. Questo plugin non è la causa di ciò, è una limitazione di Android stesso.

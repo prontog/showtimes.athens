@@ -3,3 +3,4 @@ out/
 platforms/
 *~
 *.keystore
+plugins/fetch.json

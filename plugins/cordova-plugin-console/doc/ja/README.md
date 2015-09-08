@@ -21,28 +21,23 @@
 
 [![Build Status](https://travis-ci.org/apache/cordova-plugin-console.svg)](https://travis-ci.org/apache/cordova-plugin-console)
 
-This plugin is meant to ensure that console.log() is as useful as it can be.
-It adds additional function for iOS, Ubuntu, Windows Phone 8, and Windows. If
-you are happy with how console.log() works for you, then you probably
-don't need this plugin.
+このプラグインは、その console.log() がすることができます便利なことを確認するものです。 それは iOS、Ubuntu、Windows Phone 8 は、Windows に追加の関数を追加します。 場合はあなたのための console.log() の作品に満足しているし、おそらく必要はありませんこのプラグイン。
 
-This plugin defines a global `console` object.
+このプラグインでは、グローバル ・ `console` オブジェクトを定義します。
 
-Although the object is in the global scope, features provided by this plugin
-are not available until after the `deviceready` event.
+オブジェクトは、グローバル スコープでですが、このプラグインによって提供される機能は、`deviceready` イベントの後まで使用できません。
 
     document.addEventListener("deviceready", onDeviceReady, false);
     function onDeviceReady() {
         console.log("console.log works well");
     }
+    
 
-## Installation
+## インストール
 
     cordova plugin add cordova-plugin-console
+    
 
-### Android Quirks
+### Android の癖
 
-On some platforms other than Android, console.log() will act on multiple
-arguments, such as console.log("1", "2", "3"). However, Android will act only
-on the first argument. Subsequent arguments to console.log() will be ignored.
-This plugin is not the cause of that, it is a limitation of Android itself.
+アンドロイド以外のいくつかのプラットフォームで console.log() は console.log (「1」、「2」、「3」) など、複数の引数に動作します。 しかし、アンドロイドは、最初の引数でのみ動作します。 console.log() に後続の引数は無視されます。 このプラグインが原因ではない、それは Android の自体の制限です。

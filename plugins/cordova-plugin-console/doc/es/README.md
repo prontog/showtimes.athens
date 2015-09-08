@@ -21,28 +21,21 @@
 
 [![Build Status](https://travis-ci.org/apache/cordova-plugin-console.svg)](https://travis-ci.org/apache/cordova-plugin-console)
 
-This plugin is meant to ensure that console.log() is as useful as it can be.
-It adds additional function for iOS, Ubuntu, Windows Phone 8, and Windows. If
-you are happy with how console.log() works for you, then you probably
-don't need this plugin.
+Este plugin es para asegurarse de que console.log() es tan útil como puede ser. Agrega la función adicional para iOS, Ubuntu, Windows Phone 8 y Windows. Si estás contento con cómo funciona console.log() para ti, entonces probablemente no necesitas este plugin.
 
-This plugin defines a global `console` object.
+Este plugin define un global `console` objeto.
 
-Although the object is in the global scope, features provided by this plugin
-are not available until after the `deviceready` event.
+Aunque el objeto está en el ámbito global, características proporcionadas por este plugin no están disponibles hasta después de la `deviceready` evento.
 
-    document.addEventListener("deviceready", onDeviceReady, false);
-    function onDeviceReady() {
-        console.log("console.log works well");
-    }
+    document.addEventListener ("deviceready", onDeviceReady, false);
+    function onDeviceReady() {console.log ("console.log funciona bien");}
+    
 
-## Installation
+## Instalación
 
     cordova plugin add cordova-plugin-console
+    
 
-### Android Quirks
+### Rarezas Android
 
-On some platforms other than Android, console.log() will act on multiple
-arguments, such as console.log("1", "2", "3"). However, Android will act only
-on the first argument. Subsequent arguments to console.log() will be ignored.
-This plugin is not the cause of that, it is a limitation of Android itself.
+En algunas plataformas que no sean Android, console.log() actuará en varios argumentos, como console.log ("1", "2", "3"). Sin embargo, Android actuará sólo en el primer argumento. Se omitirá posteriores argumentos para console.log(). Este plugin no es la causa de eso, es una limitación propia de Android.

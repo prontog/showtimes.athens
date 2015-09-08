@@ -21,28 +21,23 @@
 
 [![Build Status](https://travis-ci.org/apache/cordova-plugin-console.svg)](https://travis-ci.org/apache/cordova-plugin-console)
 
-This plugin is meant to ensure that console.log() is as useful as it can be.
-It adds additional function for iOS, Ubuntu, Windows Phone 8, and Windows. If
-you are happy with how console.log() works for you, then you probably
-don't need this plugin.
+這個外掛程式是為了確保該 console.log() 是一樣有用，它可以是。 它將添加附加功能的 iOS，Ubuntu，Windows Phone 8 和視窗。 如果你是快樂與 console.log() 是如何為你工作，那麼可能不需要這個外掛程式。
 
-This plugin defines a global `console` object.
+這個外掛程式定義了一個全域 `console` 物件。
 
-Although the object is in the global scope, features provided by this plugin
-are not available until after the `deviceready` event.
+儘管物件是在全球範圍內，提供這個外掛程式的功能不可用直到 `deviceready` 事件之後。
 
     document.addEventListener("deviceready", onDeviceReady, false);
     function onDeviceReady() {
         console.log("console.log works well");
     }
+    
 
-## Installation
+## 安裝
 
     cordova plugin add cordova-plugin-console
+    
 
-### Android Quirks
+### Android 的怪癖
 
-On some platforms other than Android, console.log() will act on multiple
-arguments, such as console.log("1", "2", "3"). However, Android will act only
-on the first argument. Subsequent arguments to console.log() will be ignored.
-This plugin is not the cause of that, it is a limitation of Android itself.
+在一些平臺上除了 Android，console.log() 亦會根據多個參數，如 console.log ("1"、"2"、"3"）。 然而，安卓系統只亦會根據第一個參數。 對 console.log() 的後續參數將被忽略。 這個外掛程式不是的原因，它是一個 android 作業系統本身的限制。

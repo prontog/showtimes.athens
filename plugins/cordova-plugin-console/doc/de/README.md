@@ -21,28 +21,23 @@
 
 [![Build Status](https://travis-ci.org/apache/cordova-plugin-console.svg)](https://travis-ci.org/apache/cordova-plugin-console)
 
-This plugin is meant to ensure that console.log() is as useful as it can be.
-It adds additional function for iOS, Ubuntu, Windows Phone 8, and Windows. If
-you are happy with how console.log() works for you, then you probably
-don't need this plugin.
+Dieses Plugin stellt sicher, dass der Befehl console.log() so hilfreich ist, wie er sein kann. Es fügt zusätzliche Funktion für iOS, Ubuntu, Windows Phone 8 und Windows. Teilweise kann es vorkommen, dass der Befehl console.log() nicht korrekt erkannt wird, und es zu Fehlern bzw. zu nicht angezeigten Logs in der Console kommt. Wenn Sie mit der derzeitigen Funktionsweise zufrieden sind, kann es sein, dass Sie dieses Plugin nicht benötigen.
 
-This plugin defines a global `console` object.
+Dieses Plugin wird ein global-`console`-Objekt definiert.
 
-Although the object is in the global scope, features provided by this plugin
-are not available until after the `deviceready` event.
+Obwohl das Objekt im globalen Gültigkeitsbereich ist, stehen Features von diesem Plugin nicht bis nach dem `deviceready`-Ereignis.
 
     document.addEventListener("deviceready", onDeviceReady, false);
     function onDeviceReady() {
         console.log("console.log works well");
     }
+    
 
 ## Installation
 
     cordova plugin add cordova-plugin-console
+    
 
-### Android Quirks
+### Android Eigenarten
 
-On some platforms other than Android, console.log() will act on multiple
-arguments, such as console.log("1", "2", "3"). However, Android will act only
-on the first argument. Subsequent arguments to console.log() will be ignored.
-This plugin is not the cause of that, it is a limitation of Android itself.
+Auf einigen Plattformen als Android fungieren console.log() auf mehrere Argumente wie console.log ("1", "2", "3"). Android wird jedoch nur auf das erste Argument fungieren. Nachfolgende Argumente zu console.log() werden ignoriert. Dieses Plugin ist nicht die Verantwortung dafür, es ist eine Einschränkung von Android selbst.

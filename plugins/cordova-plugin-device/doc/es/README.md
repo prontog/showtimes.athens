@@ -21,59 +21,58 @@
 
 [![Build Status](https://travis-ci.org/apache/cordova-plugin-device.svg?branch=master)](https://travis-ci.org/apache/cordova-plugin-device)
 
-This plugin defines a global `device` object, which describes the device's hardware and software.
-Although the object is in the global scope, it is not available until after the `deviceready` event.
+Este plugin define un global `device` objeto que describe del dispositivo hardware y software. Aunque el objeto está en el ámbito global, no está disponible hasta después de la `deviceready` evento.
 
     document.addEventListener("deviceready", onDeviceReady, false);
     function onDeviceReady() {
         console.log(device.cordova);
     }
+    
 
-## Installation
+## Instalación
 
     cordova plugin add cordova-plugin-device
+    
 
-## Properties
+## Propiedades
 
-- device.cordova
-- device.model
-- device.platform
-- device.uuid
-- device.version
+  * device.cordova
+  * device.model
+  * device.platform
+  * device.uuid
+  * device.version
 
 ## device.cordova
 
-Get the version of Cordova running on the device.
+Obtener la versión de Cordova que se ejecuta en el dispositivo.
 
-### Supported Platforms
+### Plataformas soportadas
 
-- Amazon Fire OS
-- Android
-- BlackBerry 10
-- Browser
-- Firefox OS
-- iOS
-- Tizen
-- Windows Phone 7 and 8
-- Windows 8
+  * Amazon fire OS
+  * Android
+  * BlackBerry 10
+  * Explorador
+  * Firefox OS
+  * iOS
+  * Tizen
+  * Windows Phone 7 y 8
+  * Windows 8
 
 ## device.model
 
-The `device.model` returns the name of the device's model or
-product. The value is set by the device manufacturer and may be
-different across versions of the same product.
+El `device.model` devuelve el nombre de modelo del dispositivo o producto. El valor es fijado por el fabricante del dispositivo y puede ser diferente a través de versiones del mismo producto.
 
-### Supported Platforms
+### Plataformas soportadas
 
-- Android
-- BlackBerry 10
-- Browser
-- iOS
-- Tizen
-- Windows Phone 7 and 8
-- Windows 8
+  * Android
+  * BlackBerry 10
+  * Explorador
+  * iOS
+  * Tizen
+  * Windows Phone 7 y 8
+  * Windows 8
 
-### Quick Example
+### Ejemplo rápido
 
     // Android:    Nexus One       returns "Passion" (Nexus One code name)
     //             Motorola Droid  returns "voles"
@@ -83,37 +82,39 @@ different across versions of the same product.
     // iOS:     for the iPad Mini, returns iPad2,5; iPhone 5 is iPhone 5,1. See http://theiphonewiki.com/wiki/index.php?title=Models
     //
     var model = device.model;
+    
 
-### Android Quirks
+### Rarezas Android
 
-- Gets the [product name](http://developer.android.com/reference/android/os/Build.html#PRODUCT) instead of the [model name](http://developer.android.com/reference/android/os/Build.html#MODEL), which is often the production code name. For example, the Nexus One returns `Passion`, and Motorola Droid returns `voles`.
+  * Obtiene el [nombre del producto](http://developer.android.com/reference/android/os/Build.html#PRODUCT) en lugar del [nombre de la modelo](http://developer.android.com/reference/android/os/Build.html#MODEL), que es a menudo el nombre de código de producción. Por ejemplo, el Nexus One devuelve `Passion` y Motorola Droid devuelve `voles`.
 
-### Tizen Quirks
+### Rarezas Tizen
 
-- Returns the device model assigned by the vendor, for example, `TIZEN`
+  * Devuelve que el modelo de dispositivo asignado por el proveedor, por ejemplo, `TIZEN`
 
-### Windows Phone 7 and 8 Quirks
+### Windows Phone 7 y 8 rarezas
 
-- Returns the device model specified by the manufacturer. For example, the Samsung Focus returns `SGH-i917`.
+  * Devuelve el modelo de dispositivo especificado por el fabricante. Por ejemplo, el Samsung Focus devuelve `SGH-i917`.
 
 ## device.platform
 
-Get the device's operating system name.
+Obtener el nombre del sistema operativo del dispositivo.
 
     var string = device.platform;
+    
 
-### Supported Platforms
+### Plataformas soportadas
 
-- Android
-- BlackBerry 10
-- Browser4
-- Firefox OS
-- iOS
-- Tizen
-- Windows Phone 7 and 8
-- Windows 8
+  * Android
+  * BlackBerry 10
+  * Browser4
+  * Firefox OS
+  * iOS
+  * Tizen
+  * Windows Phone 7 y 8
+  * Windows 8
 
-### Quick Example
+### Ejemplo rápido
 
     // Depending on the device, a few examples are:
     //   - "Android"
@@ -124,35 +125,37 @@ Get the device's operating system name.
     //   - "WinCE"
     //   - "Tizen"
     var devicePlatform = device.platform;
+    
 
-### Windows Phone 7 Quirks
+### Windows Phone 7 rarezas
 
-Windows Phone 7 devices report the platform as `WinCE`.
+Dispositivos Windows Phone 7 informe de la plataforma como `WinCE`.
 
-### Windows Phone 8 Quirks
+### Windows Phone 8 rarezas
 
-Windows Phone 8 devices report the platform as `Win32NT`.
+Dispositivos Windows Phone 8 Informe la plataforma como `Win32NT`.
 
 ## device.uuid
 
-Get the device's Universally Unique Identifier ([UUID](http://en.wikipedia.org/wiki/Universally_Unique_Identifier)).
+Obtener identificador universalmente única del dispositivo ([UUID](http://en.wikipedia.org/wiki/Universally_Unique_Identifier)).
 
     var string = device.uuid;
+    
 
-### Description
+### Descripción
 
-The details of how a UUID is generated are determined by the device manufacturer and are specific to the device's platform or model.
+Los detalles de cómo se genera un UUID son determinados por el fabricante del dispositivo y son específicos a la plataforma del dispositivo o modelo.
 
-### Supported Platforms
+### Plataformas soportadas
 
-- Android
-- BlackBerry 10
-- iOS
-- Tizen
-- Windows Phone 7 and 8
-- Windows 8
+  * Android
+  * BlackBerry 10
+  * iOS
+  * Tizen
+  * Windows Phone 7 y 8
+  * Windows 8
 
-### Quick Example
+### Ejemplo rápido
 
     // Android: Returns a random 64-bit integer (as a string, again!)
     //          The integer is generated on the device's first boot
@@ -169,40 +172,34 @@ The details of how a UUID is generated are determined by the device manufacturer
     // Tizen: returns the device IMEI (International Mobile Equipment Identity or IMEI is a number
     // unique to every GSM and UMTS mobile phone.
     var deviceID = device.uuid;
+    
 
-### iOS Quirk
+### Rarezas de iOS
 
-The `uuid` on iOS is not unique to a device, but varies for each
-application, for each installation.  It changes if you delete and
-re-install the app, and possibly also when you upgrade iOS, or even
-upgrade the app per version (apparent in iOS 5.1). The `uuid` is not
-a reliable value.
+El `uuid` en iOS no es exclusiva de un dispositivo, pero varía para cada aplicación, para cada instalación. Cambia si puedes borrar y volver a instalar la aplicación, y posiblemente también cuándo actualizar iOS, o incluso mejorar la aplicación por la versión (evidente en iOS 5.1). El `uuid` no es un valor confiable.
 
-### Windows Phone 7 and 8 Quirks
+### Windows Phone 7 y 8 rarezas
 
-The `uuid` for Windows Phone 7 requires the permission
-`ID_CAP_IDENTITY_DEVICE`.  Microsoft will likely deprecate this
-property soon.  If the capability is not available, the application
-generates a persistent guid that is maintained for the duration of the
-application's installation on the device.
+El `uuid` para Windows Phone 7 requiere el permiso `ID_CAP_IDENTITY_DEVICE`. Microsoft pronto probablemente desaprueban esta propiedad. Si la capacidad no está disponible, la aplicación genera un guid persistente que se mantiene durante la duración de la instalación de la aplicación en el dispositivo.
 
 ## device.version
 
-Get the operating system version.
+Obtener la versión del sistema operativo.
 
     var string = device.version;
+    
 
-### Supported Platforms
+### Plataformas soportadas
 
-- Android 2.1+
-- BlackBerry 10
-- Browser
-- iOS
-- Tizen
-- Windows Phone 7 and 8
-- Windows 8
+  * Android 2.1 +
+  * BlackBerry 10
+  * Explorador
+  * iOS
+  * Tizen
+  * Windows Phone 7 y 8
+  * Windows 8
 
-### Quick Example
+### Ejemplo rápido
 
     // Android:    Froyo OS would return "2.2"
     //             Eclair OS would return "2.1", "2.0.1", or "2.0"
@@ -217,4 +214,3 @@ Get the operating system version.
     // Windows Phone 7: returns current OS version number, ex. on Mango returns 7.10.7720
     // Tizen: returns "TIZEN_20120425_2"
     var deviceVersion = device.version;
-
