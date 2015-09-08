@@ -8,7 +8,8 @@ require.config({
         'jquerymobile': 'jquery.mobile-1.4.5.min',
         'underscore': 'underscore-min',
         'backbone': 'backbone-min',
-        'tinypubsub': 'jquery.ba-tinypubsub.min'
+        'tinypubsub': 'jquery.ba-tinypubsub.min',
+        'fastclick': 'fastclick-min'
     },
 
     // Sets the configuration for your third party scripts that are not AMD compatible
@@ -27,7 +28,7 @@ require.config({
 });
 
 // Includes File Dependencies
-require([ 'jquery' ], function($) {
+require(['jquery'], function($) {
     'use strict';
     $( document ).on('mobileinit', function() {
                 console.log('Received Event: mobileinit');
@@ -44,5 +45,10 @@ require([ 'jquery' ], function($) {
         showtimes.app.initialize();
         // Make app available globally. For debugging purposes.
         window.showtimes = showtimes;
+    });
+    
+    // Use fastclick to remove the 300ms delay in mobile browsers.
+    require(['fastclick'], function(fastClick) {        
+        fastClick.attach(document.body);
     });
 });
