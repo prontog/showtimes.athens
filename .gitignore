@@ -4,3 +4,4 @@ platforms/
 *~
 *.keystore
 plugins/fetch.json
+build.json
