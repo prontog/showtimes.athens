@@ -287,7 +287,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
 
             this.$ul = this.$('ul');
             this.$header = this.$("header h1");
-            this.listenTo(this.collection, 'all', this.render);
+            this.listenTo(this.collection, 'reset', this.render);
         },
         render: function() {
             logger.log('FilmCollectionView.render');
@@ -314,7 +314,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             logger.log('CategoryCollectionView.initialize');
             
             this.$ul = this.$('ul');
-            this.listenTo(this.collection, 'all', this.render);
+            this.listenTo(this.collection, 'reset', this.render);
         },
         render: function() {
             logger.log('CategoryCollectionView.render');
@@ -337,7 +337,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             logger.log('AreaCollectionView.initialize');
             
             this.$ul = this.$('ul');
-            this.listenTo(this.collection, 'all', this.render);
+            this.listenTo(this.collection, 'reset', this.render);
         },
         render: function() {
             logger.log('AreaCollectionView.render');
@@ -363,7 +363,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             var $article = this.$('article');            
             this.$filmDetails = $article.find('#film-details');
             this.$filmShowtimes = $article.find('#film-showtimes');
-            this.listenTo(this.model, 'all', this.render);
+            this.listenTo(this.model, 'change', this.render);
         },
         render: function() {
             logger.log('FilmView.render');
@@ -389,7 +389,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             var $article = this.$('article');            
             this.$cinemaDetails = $article.find('#cinema-details');
             this.$cinemaShowtimes = $article.find('#cinema-showtimes');
-            this.listenTo(this.model, 'all', this.render);
+            this.listenTo(this.model, 'change', this.render);
         },
         render: function() {
             logger.log('CinemaView.render');
@@ -421,7 +421,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             var $article = this.$('article');
             this.$h4 = $article.children('h4');
             this.$ul = $article.find('ul');
-            this.listenTo(this.model, 'all', this.render);
+            this.listenTo(this.model, 'change', this.render);
         },
         render: function() {
             logger.log('AreaView.render');
@@ -447,7 +447,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
         initialize: function(options) {
             logger.log('UpdateInfoView.initialize');
             
-            this.listenTo(this.model, 'all', this.render);
+            this.listenTo(this.model, 'change', this.render);
         },
         render: function() {
             logger.log('UpdateInfoView.render');
@@ -578,7 +578,12 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
                 logger.log("dataManager.loadUpdateInfo: updateInfo=" + new Date(updateInfoRaw.date));                
                 
                 if (dataManager.needsUpdate(updateInfoRaw, downloaded)) {
-                    $.publish(events.STALE_DATA);
+                    if (downloaded) {
+                        $.publish(events.STALE_DATA);
+                    }
+                    else {
+                        dataManager.downloadUpdateInfo();
+                    }
                 }
                 else {
                     $.publish(events.FRESH_DATA);
@@ -608,7 +613,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
                 data.exchange();
             });
 
-            $.subscribe(events.UPDATE_INFO_AVAILABLE, function(e, error, downloaded) {                
+            $.subscribe(events.UPDATE_INFO_AVAILABLE, function(e, error, downloaded) {    
                 dataManager.loadUpdateInfo(error, downloaded);
             });
             $.subscribe(events.NEW_ARRIVALS_AVAILABLE, function(e, filename) {
@@ -703,7 +708,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             };
 
             logger.log("dataManager.needsUpdate: " + JSON.stringify(diff));
-            return  diff.days > 7 ||
+            return  diff.days >= 7 ||
                     diff.months > 0  ||
                     diff.years > 0;
         },        
