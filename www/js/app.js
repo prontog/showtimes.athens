@@ -286,7 +286,12 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             logger.log('FilmCollectionView.initialize');
 
             this.$ul = this.$('ul');
-            this.$header = this.$("header h1");
+            if (options.$header) {
+                this.$header = options.$header;
+            }
+            else {
+                this.$header = this.$("header h1");
+            }
             this.listenTo(this.collection, 'reset', this.render);
         },
         render: function() {
@@ -419,7 +424,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             logger.log('AreaView.initialize');
             
             var $article = this.$('article');
-            this.$h4 = $article.children('h4');
+            this.$name = $article.find('#area-name');
             this.$ul = $article.find('ul');
             this.listenTo(this.model, 'change', this.render);
         },
@@ -427,7 +432,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             logger.log('AreaView.render');
 
             var area = this.model.toJSON();
-            this.$h4.html(area.name);
+            this.$name.html(area.name);
 
             var items = [];
             var cinemaCollectionTemplate = this.cinemaCollectionTemplate;
@@ -477,7 +482,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             this.allFilmsView = new FilmCollectionView({ el: $("#all-films"), collection: data.allFilms });
             this.filmView = new FilmView({ el: $("#film"), model: data.film });
             this.categoriesView = new CategoryCollectionView({ el: $("#categories"), collection: data.categories });
-            this.categoryFilmsView = new FilmCollectionView({ el: $("#category-films"), collection: data.categoryFilms });
+            this.categoryFilmsView = new FilmCollectionView({ el: $("#category-films"), collection: data.categoryFilms, $header: $("#category-films article h4") });
             this.allAreasView = new AreaCollectionView({ el: $("#all-areas"), collection: data.allAreas });
             this.areaView = new AreaView({ el: $("#area"), model: data.area });
             this.cinemaView = new CinemaView({ el: $("#cinema"), model: data.cinema });
