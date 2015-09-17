@@ -122,7 +122,7 @@
 				<h1>Showtimes<br>Athens</h1>
 			</header>
 			<article data-role="content" >
-                <h4></h4>
+                <strong><div></div></strong>
 				<ul data-role="listview" data-inset="true" data-filter="true">
                 </ul>
 			</article>
@@ -192,10 +192,14 @@
                 <a href="" data-icon="home" class="ui-btn-left"></a>
 				<h1>Showtimes<br>Athens</h1>                
 			</header>
-            <article>
-                <h4></h4>
-                <ul data-role="listview" data-inset="true" data-filter="true">
-                </ul>
+            <article data-role="content">         
+                <div class="ui-corner-all custom-corners">
+                    <div id="area-name" class="ui-bar ui-bar-a"></div>                
+                    <div class="ui-body ui-body-a">
+                        <ul data-role="listview" data-inset="true" data-filter="true">
+                        </ul>
+                    </div>
+                </div>
             </article>
             <footer data-role="footer" data-position="inline">
 				<h1></h1>
@@ -205,34 +209,38 @@
             <li><a href="#film/<%- film.id %>"> <%= film.title %> </a></li>
         </script>
         <script id="film-details-template" type="text/template">
-            <div id="film-title"><%= film.title %></div>
-            <img id ="film-image" src="<%= film.image %>" alt="Poster not available"></img>
-            <div id="film-orig-title"><%= film.origTitle %></div>
-            <div id="film-details"><%= film.category %>, <%= film.year %>, <%= film.filmType %></div>
-            <% if (!film.rated.match(/(-|^$)/)) { %>            
-                <div id="film-rated">Rated: <%= film.rated %></div>
-            <% } %>
-            <div id="film-duration"><%= film.duration %></div>
-            <div id="film-credits"><%= film.credits %></div>
-            <% if (film.imdb) { %>
-                <a id="film-imdb" href="<%= film.imdb %>" target="_system">IMDB</a>
-            <% } %>            
-            <% if (film.officialSite) { %>
-                <a id="film-official-site" href="<%= film.officialSite %>" target="_system">Επίσημο site</a>
-            <% } %>
-            <a id="film-athinorama" href="<%= film.url %>" target="_system">αθηνόραμα</a>
+            <div id="film-title" class="ui-bar ui-bar-a"><%= film.title %></div>
+            <div class="ui-body ui-body-a">
+                <img id ="film-image" src="<%= film.image %>" alt="Poster not available"></img>
+                <div id="film-orig-title"><%= film.origTitle %></div>
+                <div id="film-details"><%= film.category %>, <%= film.year %>, <%= film.filmType %></div>
+                <% if (!film.rated.match(/(-|^$)/)) { %>            
+                    <div id="film-rated">Rated: <%= film.rated %></div>
+                <% } %>
+                <div id="film-duration"><%= film.duration %></div>
+                <div id="film-credits"><%= film.credits %></div>
+                <% if (film.imdb) { %>
+                    <a id="film-imdb" href="<%= film.imdb %>" target="_system">IMDB</a>
+                <% } %>            
+                <% if (film.officialSite) { %>
+                    <a id="film-official-site" href="<%= film.officialSite %>" target="_system">Επίσημο site</a>
+                <% } %>
+                <a id="film-athinorama" href="<%= film.url %>" target="_system">αθηνόραμα</a>
+            </div>
         </script>
         <script id="film-showtimes-template" type="text/template">
             <% for (var i in film.theaters) { 
                 var s = film.theaters[i]; %>
                 <li>
                     <a href="#cinema/<%- encodeURIComponent(s.cinemaName) %>/<%- encodeURIComponent(s.area) %>"><%= s.cinemaName %></a>
-                    <div><%= s.area %></div>
-                    <div><%= s.address %></div>
-                    <div><%= s.phone %></div>
-                    <div><%= s.tech_info %></div>
-                    <div><%= s.price %></div>
-                    <div><%= s.rooms %></div>
+                    <div class="ui-body">
+                        <div><%= s.area %></div>
+                        <div><%= s.address %></div>
+                        <div><%= s.phone %></div>
+                        <div><%= s.tech_info %></div>
+                        <div><%= s.price %></div>
+                        <div><%= s.rooms %></div>
+                    </div>
                 </li>
             <% } %>
         </script>
@@ -243,19 +251,23 @@
             <li><a href="#area/<%- encodeURIComponent(area.name) %>"> <%= area.name %> </a></li>
         </script>
         <script id="cinema-details-template" type="text/template">            
-            <h4><%= cinema.name %></h4>
-            <div><%= cinema.area %></div>
-            <div><%= cinema.address %></div>
-            <div><%= cinema.phone %></div>
+            <div class="ui-bar ui-bar-a"><%= cinema.name %></div>
+            <div class="ui-body ui-body-a">
+                <div><%= cinema.area %></div>
+                <div><%= cinema.address %></div>
+                <div><%= cinema.phone %></div>
+            </div>
         </script>
         <script id="cinema-showtimes-template" type="text/template">
             <% for (var i in cinema.showtimes) { 
                 var s = cinema.showtimes[i]; %>
                 <li> 
                     <a href="#film/<%- s.filmId %>"> <%= s.filmTitle %> </a>
-                    <div><%= s.tech_info %></div>
-                    <div><%= s.price %></div>
-                    <div><%= s.rooms %></div>
+                    <div class="ui-body">
+                        <div><%= s.tech_info %></div>
+                        <div><%= s.price %></div>
+                        <div><%= s.rooms %></div>
+                    </div>
                 </li>
             <% } %>
         </script>
