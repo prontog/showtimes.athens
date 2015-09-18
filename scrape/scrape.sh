@@ -100,13 +100,14 @@ sleep $SLEEP_BETWEEN_REQUEST
 
 while read FILM_ID FILM_URL SHOWTIMES_URL
 do    
-    # Download image.
-    FILM_URL=http://www.athinorama.gr/lmnts/events/cinema/${FILM_ID}/Poster.jpg
+    # Download image.    
+    FILM_URL="http://www.athinorama.gr/lmnts/events/cinema/${FILM_ID}/Poster.jpg.ashx?w=170&h=250&mode=max"
     echo downloading $FILM_URL
     IMG_FILE=${DIR_IMAGES}/${FILM_ID}.jpg
-    curl -L $FILM_URL > $IMG_FILE
+    curl -L "$FILM_URL" > $IMG_FILE
     # Test if downloaded file is a JPEG. Sometimes it can be an HTML file
     # because there is no image on the site for the film.
+    set +o errexit
     file $IMG_FILE | grep -s 'JPEG'
     if [[ $? -eq 0 ]]; then
         # Resize image to 170x250.
@@ -114,6 +115,8 @@ do
     else
         rm -f $IMG_FILE
     fi    
+    set -o errexit
+    
     echo scraping showtimes ${URL_CINEMA}${SHOWTIMES_URL}
     phantomjs scrape_film_showtimes.js $FILM_ID ${URL_CINEMA}${SHOWTIMES_URL} >> $FN_SHOWTIMES
     sleep $SLEEP_BETWEEN_REQUEST
