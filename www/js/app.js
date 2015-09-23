@@ -838,10 +838,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
         onDeviceReady: function() {
             logger.log('Received Event: deviceready');
                         
-            app.router = new AppRouter();            
-
-            // Use InAppBrowser plugin to open URLs on system browser.
-            window.open = cordova.InAppBrowser.open;
+            app.router = new AppRouter();
         }
     };
     

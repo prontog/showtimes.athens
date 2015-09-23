@@ -220,12 +220,12 @@
                 <div id="film-duration"><%= film.duration %></div>
                 <div id="film-credits"><%= film.credits %></div>
                 <% if (film.imdb) { %>
-                    <a id="film-imdb" href="<%= film.imdb %>" target="_system">IMDB</a>
+                    <a id="film-imdb" href="<%= film.imdb %>" onclick="return openExternal(this);">IMDB</a>
                 <% } %>            
                 <% if (film.officialSite) { %>
-                    <a id="film-official-site" href="<%= film.officialSite %>" target="_system">Επίσημο site</a>
+                    <a id="film-official-site" href="<%= film.officialSite %>" onclick="return openExternal(this);">Επίσημο site</a>
                 <% } %>
-                <a id="film-athinorama" href="<%= film.url %>" target="_system">αθηνόραμα</a>
+                <a id="film-athinorama" href="<%= film.url %>" onclick="return openExternal(this);">αθηνόραμα</a>
             </div>
         </script>
         <script id="film-showtimes-template" type="text/template">
@@ -275,6 +275,11 @@
             <li><a href="#cinema/<%- encodeURIComponent(cinema.name) %>/<%- encodeURIComponent(cinema.area) %>"> <%= cinema.name %> </a></li>
         </script>
         <script type="text/javascript" src="cordova.js"></script>
+        <script>
+            function openExternal(elem) {
+                cordova.InAppBrowser.open(encodeURI(elem.href), "_system");
+                return false; // Prevent execution of the default onClick handler 
+            }</script>
         <script data-main="js/main" src="js/require-min.js"></script>
     </body>
 </html>
