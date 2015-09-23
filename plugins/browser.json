@@ -21,9 +21,6 @@
         "cordova-plugin-console": {
             "PACKAGE_NAME": "net.ronto.showtimes.athens"
         },
-        "cordova-plugin-crosswalk-webview": {
-            "PACKAGE_NAME": "net.ronto.showtimes.athens"
-        },
         "cordova-plugin-device": {
             "PACKAGE_NAME": "net.ronto.showtimes.athens"
         },
