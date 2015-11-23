@@ -20,11 +20,11 @@ if (args.length !== 2) {
 }
 
 common.scrape(url, function(ctx) {
-    var $films = $('#MoviesGreekMain div.plainlist a');
+    var $films = $('#Div3 div.plainlist a');
     ctx.check($films, '$films');
 
     $films.each(function() {     
         var filmUrl = $(this).attr('href');                    
         console.log(filmUrl);
-    }); // each                              
+    }); // each                                
 });
