@@ -1,0 +1,10 @@
+{
+    "jslint.options": {
+        "plusplus": "true",
+        "nomen":true, 
+        "vars":true, 
+        "devel":true, 
+        "node":true, 
+        "white":true
+    }
+}
