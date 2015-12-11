@@ -217,7 +217,7 @@
         <script id="film-details-template" type="text/template">
             <div id="film-title" class="ui-bar ui-bar-a"><%= film.title %></div>
             <div class="ui-body ui-body-a">
-                <img id ="film-image" src="<%= film.image %>" alt="Poster not available"></img>
+                <img id ="film-image" src="<%= film.image %>" alt="Το poster της ταινίας"></img>
                 <div id="film-orig-title"><%= film.origTitle %></div>
                 <div id="film-details"><%= film.category %>, <%= film.year %>, <%= film.filmType %></div>
                 <% if (!film.rated.match(/(-|^$)/)) { %>            

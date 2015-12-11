@@ -55,46 +55,46 @@ function prepare_dir
         if ! mkdir $1 ; then exit 1; fi
     fi           
 }
-#
-## If the temp dir exists then clean it up. Otherwise create it.
-#if [[ -d $DIR_TMP ]]
-#then 
-#    clean_up
-#else
-#    prepare_dir $DIR_TMP
-#fi
-#
-## The same for the images folder.
-#prepare_dir $DIR_IMAGES
-## The same for the out folder.
-#prepare_dir $DIR_OUT
-#
-## Clean up the temp dir if interrupted by control-c.
-#trap 'clean_up; exit 1' TERM INT
-## Enabling auto exit when a command fails. This simplifies error-handling.
-## Note that this excludes commands following the if keyword as well as other
-## cases mentioned in the BASH manual pages.
-#set -o errexit
-#
-## Scrape new films.
-#echo +New arrivals
-## Scraped URLs are stored to a file as well as output to STDOUT.
-#echo scraping URLs...
-#phantomjs scrape_new_arrivals.js $URL_CINEMA > $FN_NEW_ARRIVAL_URLS
-#sleep $SLEEP_BETWEEN_REQUEST
-#scrape_films $FN_NEW_ARRIVAL_URLS $FN_NEW_ARRIVALS
-#
-## Scrape all films.
-#echo +All films
-## Scraped URLs are stored to a file as well as output to STDOUT.
-#echo scraping URLs...
-#phantomjs scrape_all_films.js $URL_CINEMA > $FN_ALL_FILMS_URLS
-#sleep $SLEEP_BETWEEN_REQUEST
-#scrape_films $FN_ALL_FILMS_URLS $FN_ALL_FILMS
-#
-#echo +Images and Showtimes
-#phantomjs map_film_info.js $FN_ALL_FILMS > $FN_FILM_INFO
-#sleep $SLEEP_BETWEEN_REQUEST
+
+# If the temp dir exists then clean it up. Otherwise create it.
+if [[ -d $DIR_TMP ]]
+then 
+    clean_up
+else
+    prepare_dir $DIR_TMP
+fi
+
+# The same for the images folder.
+prepare_dir $DIR_IMAGES
+# The same for the out folder.
+prepare_dir $DIR_OUT
+
+# Clean up the temp dir if interrupted by control-c.
+trap 'clean_up; exit 1' TERM INT
+# Enabling auto exit when a command fails. This simplifies error-handling.
+# Note that this excludes commands following the if keyword as well as other
+# cases mentioned in the BASH manual pages.
+set -o errexit
+
+# Scrape new films.
+echo +New arrivals
+# Scraped URLs are stored to a file as well as output to STDOUT.
+echo scraping URLs...
+phantomjs scrape_new_arrivals.js $URL_CINEMA > $FN_NEW_ARRIVAL_URLS
+sleep $SLEEP_BETWEEN_REQUEST
+scrape_films $FN_NEW_ARRIVAL_URLS $FN_NEW_ARRIVALS
+
+# Scrape all films.
+echo +All films
+# Scraped URLs are stored to a file as well as output to STDOUT.
+echo scraping URLs...
+phantomjs scrape_all_films.js $URL_CINEMA > $FN_ALL_FILMS_URLS
+sleep $SLEEP_BETWEEN_REQUEST
+scrape_films $FN_ALL_FILMS_URLS $FN_ALL_FILMS
+
+echo +Images and Showtimes
+phantomjs map_film_info.js $FN_ALL_FILMS > $FN_FILM_INFO
+sleep $SLEEP_BETWEEN_REQUEST
 
 while read FILM_ID FILM_URL SHOWTIMES_URL
 do    
