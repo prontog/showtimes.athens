@@ -1,29 +1,8 @@
 /*jslint nomen:true, vars:true, devel:true, browser:true, white:true */
 /*globals define:true, cordova: true */
 
-define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], function($, Mobile, Backbone, _, TinyPubSub) {
+define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub", "logger",  "downloader"], function($, Mobile, Backbone, _, TinyPubSub, logger, Downloader) {
     "use strict";
-    /*******************************************************************************/
-    /**************** Logger *******************************************************/
-    var logger = {
-        appName: "[Showtimes]",
-        log: function(msg) {
-            console.log(this.prepareLogEntry(msg));
-            //steroids.logger.log(this.prepareLogEntry(msg));
-        },
-        error: function(msg) {
-            console.log(this.prepareLogEntry(msg, "Error"));
-            //steroids.logger.log(this.prepareLogEntry(msg, "Error"));
-        },
-        prepareLogEntry: function(entry, category) {
-            var header = this.appName + " ";
-            if (category) {
-                header += category + ": ";
-            }
-            entry = header + entry;
-            return entry;
-        }
-    };
     
     /*******************************************************************************/
     /**************** Events *******************************************************/
@@ -261,20 +240,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             }
 
             return retObj;
-        },
-        tmp: {
-            updateInfo: null,
-            newFilms: [],
-            allFilms: [],
-            showtimes: []
-        },
-        exchange: function() {
-            logger.log("data.exchange");
-//            data.updateInfo = data.tmp.updateInfo;
-//            data.newFilmsRaw = data.tmp.newFilms;
-//            data.allFilmsRaw = data.tmp.allFilms;
-//            data.allShowtimesRaw = data.tmp.showtimes;
-        }                
+        }               
     };
     
     /*******************************************************************************/
@@ -505,25 +471,14 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
         FILE_ALL_FILMS: "all_films.json",
         FILE_SHOWTIMES: "showtimes.json",
         FILE_UPDATE_INFO: "update_info.json",
-        downloadToStorage: function(url, entry, success, error) {
-            logger.log("dataManager.downloadToStorage: " + entry);
+        getFilenameFromUrl: function(url) {
+            return url.substr(url.lastIndexOf('/') + 1);
+        },
+        saveToStorage: function(url, data) {
+            var entry = dataManager.getFilenameFromUrl(url);
+            logger.log("dataManager.saveToStorage: " + entry);
             
-            var uri = encodeURI(url);
-
-            $.get(uri).done(function(data) {
-                logger.log("$.get: " + url + " download completed");
-                
-                window.localStorage.setItem(entry, data);
-                
-                if (success) {
-                    success(entry);
-                }
-            }).fail(function(e) {
-                logger.error("fileTransfer.downloadToStorage: " + JSON.stringify(e));
-                if (error) {
-                    error();
-                }
-            });
+            window.localStorage.setItem(entry, data);            
         },
         loadFromStorage: function(entry, to, success, error) {            
             logger.log("dataManager.loadFromStorage: " + entry);
@@ -562,12 +517,13 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
         downloadUpdateInfo: function() {
             logger.log("dataManager.downloadUpdateInfo");
             
-            dataManager.downloadToStorage(dataManager.URL_UPDATE_INFO,
-                          dataManager.FILE_UPDATE_INFO,
-                          function(filename) {
-                            $.publish(events.UPDATE_INFO_AVAILABLE, [filename, true]);
-                          },
-                          views.downloadError);
+            var dl = new Downloader(
+                            [dataManager.URL_UPDATE_INFO],
+                            dataManager.saveToStorage,
+                            function(filename) { //TODO: change this
+                                $.publish(events.UPDATE_INFO_AVAILABLE, [filename, true]);
+                            },
+                            views.downloadError).download();
         },
         loadUpdateInfo: function(error, downloaded) {
             logger.log("dataManager.loadUpdateInfo: downloaded=" + (downloaded ? "true" : "false"));
@@ -615,7 +571,10 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
             });
             
             $.subscribe(events.DOWNLOADING_COMPLETED, function(e) {
-                data.exchange();
+                $.publish(events.UPDATE_INFO_AVAILABLE, [dataManager.FILE_UPDATE_INFO, true]);
+                $.publish(events.NEW_ARRIVALS_AVAILABLE, [dataManager.FILE_NEW_ARRIVALS]);
+                $.publish(events.ALL_FILMS_AVAILABLE, [dataManager.FILE_ALL_FILMS]);
+                $.publish(events.SHOWTIMES_AVAILABLE, [dataManager.FILE_SHOWTIMES]);
             });
 
             $.subscribe(events.UPDATE_INFO_AVAILABLE, function(e, error, downloaded) {    
@@ -648,30 +607,20 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub"], funct
         update: function(all) {
             logger.log("dataManager.update");                        
 
+            var filesToUpdate = [dataManager.URL_NEW_ARRIVALS,
+                                 dataManager.URL_ALL_FILMS, 
+                                 dataManager.URL_SHOWTIMES];
+            
             if (all) {
-                dataManager.downloadUpdateInfo();
+                filesToUpdate.push(dataManager.URL_UPDATE_INFO);
             }
             
-            dataManager.downloadToStorage(dataManager.URL_NEW_ARRIVALS,
-                          dataManager.FILE_NEW_ARRIVALS,
-                          function(filename) {
-                            $.publish(events.NEW_ARRIVALS_AVAILABLE, [filename]);
-                          },
-                          views.downloadError);
-
-            dataManager.downloadToStorage(dataManager.URL_ALL_FILMS,
-                          dataManager.FILE_ALL_FILMS,
-                          function(filename) {
-                            $.publish(events.ALL_FILMS_AVAILABLE, [filename]);
-                          },
-                          views.downloadError);
-
-            dataManager.downloadToStorage(dataManager.URL_SHOWTIMES,
-                          dataManager.FILE_SHOWTIMES,
-                          function(filename) {
-                            $.publish(events.SHOWTIMES_AVAILABLE, [filename]);
-                          },
-                          views.downloadError);
+            var dl = new Downloader(filesToUpdate,
+                                    dataManager.saveToStorage,
+                                    function() {
+                                        $.publish(events.DOWNLOADING_COMPLETED);
+                                    },
+                                    views.downloadError).download();
         },
         // Returns true if the data are more than 7 days old.
         needsUpdate: function(updateInfo, downloaded) {        

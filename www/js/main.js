@@ -9,7 +9,7 @@ require.config({
         'underscore': 'underscore-min',
         'backbone': 'backbone-min',
         'tinypubsub': 'jquery.ba-tinypubsub.min',
-        'fastclick': 'fastclick-min'
+        'fastclick': 'fastclick-min'        
     },
 
     // Sets the configuration for your third party scripts that are not AMD compatible
@@ -28,10 +28,10 @@ require.config({
 });
 
 // Includes File Dependencies
-require(['jquery'], function($) {
+require(['jquery', 'logger'], function($, logger) {
     'use strict';
     $( document ).on('mobileinit', function() {
-                console.log('Received Event: mobileinit');
+                logger.log('Received Event: mobileinit');
                 // Prevents all anchor click handling
                 $.mobile.linkBindingEnabled = false;
                 // Disabling this will prevent jQuery Mobile from handling hash changes
