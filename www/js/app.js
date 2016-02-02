@@ -686,7 +686,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub", "logge
             Backbone.history.start({ pushState: false });
         },
         routes: {
-            "": "main",
+            "main":"main",
             "film/:id":    "film",
             "category-films/:name": "category",
             "area/:name": "area",
@@ -696,7 +696,7 @@ define(["jquery", "jquerymobile", "backbone", "underscore", "tinypubsub", "logge
         },
         main: function() {
             logger.log("AppRouter.main");
-            $.mobile.pageContainer.pagecontainer("change", "", { reverse: false, changeHash: false });
+            $.mobile.pageContainer.pagecontainer("change", "#main", { reverse: false, changeHash: false });
         },
         film: function(id) {
             logger.log("AppRouter.film: " + id);
