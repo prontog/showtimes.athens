@@ -187,6 +187,7 @@ module.exports = (function() {
     // NOTE: Any other params passed will be added to a context object
     //       that will be passed to func.
     var scrape = function(url, func) {
+        url = encodeURI(url);
         writeDebugInfo('***** scrape(' + url + ') *****');
 
         var i;
