@@ -18,8 +18,8 @@ dl.load();   // start loading. Will call onSamplesDecoded once all files loaded 
 
  ############################## */
 
-define(["jquery", "logger"], function($, logger) {
-    "use strict";
+define(['jquery', 'logger'], function($, logger) {
+    'use strict';
     function Downloader(urlList, unitSuccess, success, error) {        
         this.urlList = urlList;
         this.unitSuccess = unitSuccess;
@@ -29,14 +29,14 @@ define(["jquery", "logger"], function($, logger) {
     }
 
     Downloader.prototype.downloadFile = function(url) {
-        logger.log("Downloader.downloadFile: " + url);
+        logger.log('Downloader.downloadFile: ' + url);
             
         var dl = this;
         var uri = encodeURI(url);
 
         $.get(uri).done(function(data) {
             console.log(dl);
-            logger.log("$.get: " + url + " download completed with size " + data.length);
+            logger.log('$.get: ' + url + ' download completed with size ' + data.length);
             
             if (dl.unitSuccess) {
                 dl.unitSuccess(url, data);
@@ -48,7 +48,7 @@ define(["jquery", "logger"], function($, logger) {
             }
             
         }).fail(function(e) {
-            logger.error("Downloader.downloadFile: " + JSON.stringify(e));
+            logger.error('Downloader.downloadFile: ' + JSON.stringify(e));
             if (dl.error) {
                 dl.error();
             }
@@ -56,7 +56,7 @@ define(["jquery", "logger"], function($, logger) {
     };
     
     Downloader.prototype.download = function() {
-        logger.log("Downloader.download Downloading " + this.urlList.length + " files. Please wait...");
+        logger.log('Downloader.download Downloading ' + this.urlList.length + ' files. Please wait...');
         var i;
         for (i = 0; i < this.urlList.length; ++i) {
             this.downloadFile(this.urlList[i]);

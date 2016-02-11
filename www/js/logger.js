@@ -2,21 +2,21 @@
 /*globals define:true, cordova: true */
 
 define(function() {
-    "use strict";
+    'use strict';
     var logger = {
-        appName: "[Showtimes]",
+        appName: '[Showtimes]',
         log: function(msg) {
             console.log(this.prepareLogEntry(msg));
             //steroids.logger.log(this.prepareLogEntry(msg));
         },
         error: function(msg) {
-            console.log(this.prepareLogEntry(msg, "Error"));
-            //steroids.logger.log(this.prepareLogEntry(msg, "Error"));
+            console.log(this.prepareLogEntry(msg, 'Error'));
+            //steroids.logger.log(this.prepareLogEntry(msg, 'Error'));
         },
         prepareLogEntry: function(entry, category) {
-            var header = this.appName + " ";
+            var header = this.appName + ' ';
             if (category) {
-                header += category + ": ";
+                header += category + ': ';
             }
             entry = header + entry;
             return entry;
