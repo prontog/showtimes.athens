@@ -190,14 +190,17 @@ define(['jquery', 'jquerymobile', 'backbone', 'underscore', 'tinypubsub', 'logge
         needsUpdate: function() {        
             logger.log('dataManager.needsUpdate');
                                     
-            var loadedUpdateInfo = JSON.parse(window.localStorage.getItem(dataManager.FILE_UPDATE_INFO));            
-            
-            var downloadedUpdateInfo = JSON.parse(window.sessionStorage.getItem(dataManager.FILE_UPDATE_INFO));
+            var loadedUpdateInfo = JSON.parse(window.localStorage.getItem(dataManager.FILE_UPDATE_INFO));
             
             var diffMs;
             
             if (loadedUpdateInfo) {
+                logger.log('dataManager.needsUpdate: loaded update.info from localStorage');
+                
+                var downloadedUpdateInfo = JSON.parse(window.sessionStorage.getItem(dataManager.FILE_UPDATE_INFO));
+                
                 if (downloadedUpdateInfo) {
+                    logger.log('dataManager.needsUpdate: loaded update.info from sessionStorage (downloaded)');
                     diffMs = downloadedUpdateInfo.date - loadedUpdateInfo.date;
                     if (diffMs <= 0) {
                         logger.log('dataManager.needsUpdate: ' + 'Data is up to date.');
@@ -214,6 +217,7 @@ define(['jquery', 'jquerymobile', 'backbone', 'underscore', 'tinypubsub', 'logge
                 }
             }
             else {
+                logger.log('dataManager.needsUpdate: Missing update.info');
                 return true;
             }
             
@@ -221,7 +225,7 @@ define(['jquery', 'jquerymobile', 'backbone', 'underscore', 'tinypubsub', 'logge
             //logger.log('dataManager.needsUpdate: ' + diffDate);
             var diff = {
                     diff: diffDate.getTime(),
-                    days: diffDate.getUTCDate() - 1,
+                    days: diffDate.getUTCDate(),
                     months: diffDate.getUTCMonth(),
                     years: diffDate.getFullYear() - 1970
             };
@@ -310,7 +314,7 @@ define(['jquery', 'jquerymobile', 'backbone', 'underscore', 'tinypubsub', 'logge
         update: function() {
             logger.log('AppRouter.update');
             
-            dataManager.update(true);
+            dataManager.update();
         },
         defaultHandler: function(path) {
             logger.log('AppRouter.default: ' + path);
