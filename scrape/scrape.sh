@@ -113,7 +113,7 @@ function scrape_new_films
     scrape_films $FN_NEW_ARRIVAL_URLS $FN_NEW_ARRIVALS
 }
 
-function scrap_all_films
+function scrape_all_films
 {
     # Scrape all films.
     echo +All films
@@ -193,12 +193,12 @@ case $CONTINUE in
     everything|new-arrivals)
         clean_up
         scrape_new_films
-        scrap_all_films
+        scrape_all_films
         scrape_maps
         scrape_images_and_showtimes
         ;;
     all-films)
-        scrap_all_films
+        scrape_all_films
         scrape_maps
         scrape_images_and_showtimes
         ;;
