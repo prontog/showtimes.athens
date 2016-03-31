@@ -18,6 +18,7 @@ FN_UPDATE_INFO=$DIR_TMP/update_info.json
 SLEEP_BETWEEN_REQUEST=1
 
 SCRIPT_NAME=$(basename $0)
+SCRIPT_DIR=$(dirname $0)
 
 #----- Functions
 
@@ -179,6 +180,9 @@ do
     esac
 done
 
+# CD to script dir to avoid full paths.
+cd $SCRIPT_DIR
+
 # Clean up the temp dir if interrupted by control-c.
 trap 'clean_up; exit 1' TERM INT
 # Enabling auto exit when a command fails. This simplifies error-handling.
@@ -219,6 +223,7 @@ phantomjs prepare_update_info.js > $FN_UPDATE_INFO
 # Rename the tmp dir now that the process has completed successfully.
 DIR_OUT_NAME=$(date +%Y%m%d_%H%M%S)
 mv $DIR_TMP $DIR_OUT/$DIR_OUT_NAME
-# Zip the out dir.
-cd $DIR_OUT
-zip -r ${DIR_OUT_NAME}.zip $DIR_OUT_NAME
+# Sync with www/showtimes
+rsync -a --delete $DIR_OUT/$DIR_OUT_NAME/ /var/www/showtimes/data
+
+echo +Updated /var/www/showtimes/data
