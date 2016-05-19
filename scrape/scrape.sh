@@ -48,7 +48,7 @@ Steps:
         start scraping map info and move to the next step
   showtimes,
         start scraping showtimes and move to the next step
-  
+
 EOF
     exit 1
 }
@@ -59,30 +59,30 @@ error() {
     exit 1
 }
 
-# Creates the dir passed as param 1 if it does not already exist. If it fails to 
-# create the dir it exits. 
+# Creates the dir passed as param 1 if it does not already exist. If it fails to
+# create the dir it exits.
 function prepare_dir
 {
     if [[ ! -d $1 ]]; then
-        if ! mkdir $1 ; then 
+        if ! mkdir $1 ; then
             exit 1
         fi
-    fi        
+    fi
 }
 
 # Clean up temp directories.
 function clean_up
 {
     echo Cleaning up...
-    
+
     if [[ -d $DIR_TMP ]]; then
         rm -rfv $DIR_TMP
     fi
-    
+
     # Create the temp dir if it does not exist.
     prepare_dir $DIR_TMP
     # The same for the images dir.
-    prepare_dir $DIR_IMAGES    
+    prepare_dir $DIR_IMAGES
 }
 
 # Scrape all films from a url and append the JSON output to a file
@@ -93,7 +93,7 @@ function scrape_films
     : ${2? "scrape_films: missing second argument"}
     # Scrape the film info from each URL.
     while read film_url
-    do        
+    do
         echo scraping ${URL_ATHINORAMA}${film_url}...
         phantomjs scrape_film.js ${URL_ATHINORAMA}$film_url >> $2
         sleep $SLEEP_BETWEEN_REQUEST
@@ -118,7 +118,7 @@ function scrape_all_films
 {
     # Scrape all films.
     echo +All films
-    
+
     # Scraped URLs are stored to a file as well as output to STDOUT.
     echo scraping URLs...
     if [[ ! -f $FN_ALL_FILMS_URLS ]]; then
@@ -141,8 +141,8 @@ function scrape_images_and_showtimes
     echo +Images and Showtimes
 
     while read FILM_ID FILM_URL SHOWTIMES_URL
-    do    
-        # Download image.    
+    do
+        # Download image.
         FILM_URL="http://www.athinorama.gr/lmnts/events/cinema/${FILM_ID}/Poster.jpg.ashx?w=170&h=250&mode=max"
         echo downloading $FILM_URL
         IMG_FILE=${DIR_IMAGES}/${FILM_ID}.jpg
@@ -153,10 +153,10 @@ function scrape_images_and_showtimes
         file $IMG_FILE | grep -s 'JPEG'
         if [[ $? -eq 0 ]]; then
             # Resize image to 170x250.
-            convert $IMG_FILE -strip -resize 170x250 $IMG_FILE    
+            convert $IMG_FILE -strip -resize 170x250 $IMG_FILE
         else
             rm -f $IMG_FILE
-        fi    
+        fi
         set -o errexit
 
         echo scraping showtimes ${URL_ATHINORAMA}${SHOWTIMES_URL}
@@ -170,7 +170,7 @@ CONTINUE=everything
 # Parse options.
 while getopts hc: currOption
 do
-    case $currOption in        
+    case $currOption in
         c) CONTINUE=$OPTARG
             ;;
         h) usage
@@ -189,6 +189,8 @@ trap 'clean_up; exit 1' TERM INT
 # Note that this excludes commands following the if keyword as well as other
 # cases mentioned in the BASH manual pages.
 set -o errexit
+
+echo --Scraping started: $(date)
 
 # Prepare the out dir.
 prepare_dir $DIR_OUT
@@ -227,3 +229,5 @@ mv $DIR_TMP $DIR_OUT/$DIR_OUT_NAME
 rsync -a --delete $DIR_OUT/$DIR_OUT_NAME/ /var/www/showtimes/data
 
 echo +Updated /var/www/showtimes/data
+
+echo --Scraping finished: $(date)
