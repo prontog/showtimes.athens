@@ -146,7 +146,7 @@ function scrape_images_and_showtimes
         FILM_URL="http://www.athinorama.gr/lmnts/events/cinema/${FILM_ID}/Poster.jpg.ashx?w=170&h=250&mode=max"
         echo downloading $FILM_URL
         IMG_FILE=${DIR_IMAGES}/${FILM_ID}.jpg
-        curl -L "$FILM_URL" > $IMG_FILE
+        wget "$FILM_URL" -O $IMG_FILE
         # Test if downloaded file is a JPEG. Sometimes it can be an HTML file
         # because there is no image on the site for the film.
         set +o errexit
