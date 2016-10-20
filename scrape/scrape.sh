@@ -15,7 +15,7 @@ FN_ALL_FILMS=$DIR_TMP/all_films.json
 FN_FILM_INFO=$DIR_TMP/films.info
 FN_SHOWTIMES=$DIR_TMP/showtimes.json
 FN_UPDATE_INFO=$DIR_TMP/update_info.json
-SLEEP_BETWEEN_REQUEST=1
+SLEEP_BETWEEN_REQUEST=2
 
 SCRIPT_NAME=$(basename $0)
 SCRIPT_DIR=$(dirname $0)
@@ -146,15 +146,16 @@ function scrape_images_and_showtimes
         FILM_URL="http://www.athinorama.gr/lmnts/events/cinema/${FILM_ID}/Poster.jpg.ashx?w=170&h=250&mode=max"
         echo downloading $FILM_URL
         IMG_FILE=${DIR_IMAGES}/${FILM_ID}.jpg
+
+        set +o errexit
         wget "$FILM_URL" -O $IMG_FILE
         # Test if downloaded file is a JPEG. Sometimes it can be an HTML file
         # because there is no image on the site for the film.
-        set +o errexit
-        file $IMG_FILE | grep -s 'JPEG'
-        if [[ $? -eq 0 ]]; then
+        if file $IMG_FILE | grep -s 'JPEG'; then
             # Resize image to 170x250.
             convert $IMG_FILE -strip -resize 170x250 $IMG_FILE
         else
+            echo "Not a JPG image! Needs investigation."
             rm -f $IMG_FILE
         fi
         set -o errexit
