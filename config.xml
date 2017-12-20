@@ -4,7 +4,7 @@
     <description>
         Cinema showtimes in Athens, Greece.
     </description>
-    <author email="p.g.ronto@gmail.com" href="http://www.showtimes.ronto.net">
+    <author email="p.g.ronto@gmail.com" href="http://showtimes.ronto.net">
         Panos Rontogiannis
     </author>
     <content src="index.html" />
