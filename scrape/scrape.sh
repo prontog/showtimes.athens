@@ -50,12 +50,12 @@ Steps:
         start scraping showtimes and move to the next step
 
 EOF
-    exit 1
+    exit 1 >&2
 }
 
 # Ouput an error message.
 error() {
-    echo $SCRIPT_NAME: $1 See "$SCRIPT_NAME -h".
+    echo $SCRIPT_NAME: $1 See "$SCRIPT_NAME -h". >&2
     exit 1
 }
 
@@ -191,7 +191,7 @@ trap 'clean_up; exit 1' TERM INT
 # cases mentioned in the BASH manual pages.
 set -o errexit
 
-echo --Scraping started: $(date)
+echo --Scraping started: $(date) >&2
 
 # Prepare the out dir.
 prepare_dir $DIR_OUT
@@ -231,4 +231,4 @@ rsync -a --delete $DIR_OUT/$DIR_OUT_NAME/ /var/www/showtimes/data
 
 echo +Updated /var/www/showtimes/data
 
-echo --Scraping finished: $(date)
+echo --Scraping finished: $(date)  >&2
