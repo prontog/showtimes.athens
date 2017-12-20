@@ -12,8 +12,3 @@ Prerequisites for the app
 ------------------------------------------
 1. Apache Cordova (http://cordova.apache.org)
 2. Mocha (http://visionmedia.github.io/mocha)
-
-Prerequisites for the server (obsolete)
-------------------------------------------
-1. Node.js (http://nodejs.org/)
-2. Sails.js (http://sailsjs.com)
