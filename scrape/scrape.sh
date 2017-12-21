@@ -55,7 +55,7 @@ EOF
 
 # Ouput an error message.
 error() {
-    echo $SCRIPT_NAME: $1 See "$SCRIPT_NAME -h". >&2
+    echo "$SCRIPT_NAME: $1 See "$SCRIPT_NAME -h"." >&2
     exit 1
 }
 
@@ -73,7 +73,7 @@ function prepare_dir
 # Clean up temp directories.
 function clean_up
 {
-    echo Cleaning up...
+    echo "Cleaning up..."
 
     if [[ -d $DIR_TMP ]]; then
         rm -rfv $DIR_TMP
@@ -94,7 +94,7 @@ function scrape_films
     # Scrape the film info from each URL.
     while read film_url
     do
-        echo scraping ${URL_ATHINORAMA}${film_url}...
+        echo "scraping ${URL_ATHINORAMA}${film_url}..."
         phantomjs scrape_film.js ${URL_ATHINORAMA}$film_url >> $2
         sleep $SLEEP_BETWEEN_REQUEST
     done < $1
@@ -103,10 +103,10 @@ function scrape_films
 function scrape_new_films
 {
     # Scrape new films.
-    echo +New arrivals
+    echo "+New arrivals"
 
     # Scraped URLs are stored to a file as well as output to STDOUT.
-    echo scraping URLs...
+    echo "scraping URLs..."
     if [[ ! -f $FN_NEW_ARRIVAL_URLS ]]; then
         phantomjs scrape_new_arrivals.js $URL_CINEMA > $FN_NEW_ARRIVAL_URLS
     fi
@@ -117,10 +117,10 @@ function scrape_new_films
 function scrape_all_films
 {
     # Scrape all films.
-    echo +All films
+    echo "+All films"
 
     # Scraped URLs are stored to a file as well as output to STDOUT.
-    echo scraping URLs...
+    echo "scraping URLs..."
     if [[ ! -f $FN_ALL_FILMS_URLS ]]; then
         phantomjs scrape_all_films.js $URL_CINEMA > $FN_ALL_FILMS_URLS
     fi
@@ -130,7 +130,7 @@ function scrape_all_films
 
 function scrape_maps
 {
-    echo scraping map info...
+    echo "scraping map info..."
 
     phantomjs map_film_info.js $FN_ALL_FILMS > $FN_FILM_INFO
     sleep $SLEEP_BETWEEN_REQUEST
@@ -138,29 +138,30 @@ function scrape_maps
 
 function scrape_images_and_showtimes
 {
-    echo +Images and Showtimes
+    echo "+Images and Showtimes"
 
     while read FILM_ID FILM_URL SHOWTIMES_URL
     do
         # Download image.
         FILM_URL="http://www.athinorama.gr/lmnts/events/cinema/${FILM_ID}/Poster.jpg.ashx?w=170&h=250&mode=max"
-        echo downloading $FILM_URL
+        echo "downloading $FILM_URL"
         IMG_FILE=${DIR_IMAGES}/${FILM_ID}.jpg
 
-        set +o errexit
-        wget "$FILM_URL" -O $IMG_FILE
-        # Test if downloaded file is a JPEG. Sometimes it can be an HTML file
-        # because there is no image on the site for the film.
-        if file $IMG_FILE | grep -s 'JPEG'; then
-            # Resize image to 170x250.
-            convert $IMG_FILE -strip -resize 170x250 $IMG_FILE
+        if wget -q "$FILM_URL" -O $IMG_FILE; then
+            # Test if downloaded file is a JPEG. Sometimes it can be an HTML file
+            # because there is no image on the site for the film.
+            if file $IMG_FILE | grep -s 'JPEG'; then
+                # Resize image to 170x250.
+                convert $IMG_FILE -strip -resize 170x250 $IMG_FILE
+            else
+                echo "Warning: downloaded file from $FILM_URL is not a JPG image" >&2
+                rm -f $IMG_FILE
+            fi
         else
-            echo "Not a JPG image! Needs investigation."
-            rm -f $IMG_FILE
+            echo "Warning: failed to download $FILM_URL" >&2
         fi
-        set -o errexit
 
-        echo scraping showtimes ${URL_ATHINORAMA}${SHOWTIMES_URL}
+        echo "scraping showtimes ${URL_ATHINORAMA}${SHOWTIMES_URL}"
         phantomjs scrape_film_showtimes.js $FILM_ID ${URL_ATHINORAMA}${SHOWTIMES_URL} >> $FN_SHOWTIMES
         sleep $SLEEP_BETWEEN_REQUEST
     done < $FN_FILM_INFO
@@ -191,7 +192,7 @@ trap 'clean_up; exit 1' TERM INT
 # cases mentioned in the BASH manual pages.
 set -o errexit
 
-echo --Scraping started: $(date) >&2
+echo "--Scraping started: $(date)" >&2
 
 # Prepare the out dir.
 prepare_dir $DIR_OUT
@@ -220,7 +221,7 @@ case $CONTINUE in
         ;;
 esac
 
-echo +UpdateInfo
+echo "+UpdateInfo"
 phantomjs prepare_update_info.js > $FN_UPDATE_INFO
 
 # Rename the tmp dir now that the process has completed successfully.
@@ -229,6 +230,6 @@ mv $DIR_TMP $DIR_OUT/$DIR_OUT_NAME
 # Sync with www/showtimes
 rsync -a --delete $DIR_OUT/$DIR_OUT_NAME/ /var/www/showtimes/data
 
-echo +Updated /var/www/showtimes/data
+echo "+Updated /var/www/showtimes/data"
 
-echo --Scraping finished: $(date)  >&2
+echo "--Scraping finished: $(date)"  >&2
